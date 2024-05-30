@@ -1,50 +1,49 @@
-'use client'
+'use client';
 
-import { CardAdComponent } from "@/components/business/cards/card-ad.component";
+import { CardAdComponent } from '@/components/business/cards/card-creative.component';
 // import { SelectDemo } from "@/components/business/filter/card-demo";
-import { FilterBarComponent } from "@/components/business/filter/filter-bar.component";
-import { MenubarDemo } from "@/components/business/filter/menubar-demo";
-import { SelectGeneric } from "@/components/business/filter/select-demo";
+import { FilterBarComponent } from '@/components/business/filter/filter-bar.component';
+import { SelectGeneric } from '@/components/business/filter/select-demo';
+import { SkeletonCardCreative } from '@/components/ui/custom/skeleton-card-creative';
 
 export default function DashboardPage() {
   return (
     <div className="w-full lg:grid lg:min-h-[600px] xl:min-h-[800px]">
-      <MenubarDemo />
       <div>
         <FilterBarComponent>
-          <SelectGeneric 
-            label="Grupo Ads" 
+          <SelectGeneric
+            label="Grupo Ads"
             placeholder="Grupo Ads"
             items={[
-              { value: "apple", label: "Apple" },
-              { value: "banana", label: "Banana" },
-              { value: "blueberry", label: "Blueberry" },
-              { value: "grapes", label: "Grapes" },
-              { value: "pineapple", label: "Pineapple" },
+              { value: 'apple', label: 'Apple' },
+              { value: 'banana', label: 'Banana' },
+              { value: 'blueberry', label: 'Blueberry' },
+              { value: 'grapes', label: 'Grapes' },
+              { value: 'pineapple', label: 'Pineapple' },
             ]}
             className="w-[140px]"
           />
-          <SelectGeneric 
-            label="Grupo Ads" 
+          <SelectGeneric
+            label="Grupo Ads"
             placeholder="Grupo Ads"
             items={[
-              { value: "apple", label: "Apple" },
-              { value: "banana", label: "Banana" },
-              { value: "blueberry", label: "Blueberry" },
-              { value: "grapes", label: "Grapes" },
-              { value: "pineapple", label: "Pineapple" },
+              { value: 'apple', label: 'Apple' },
+              { value: 'banana', label: 'Banana' },
+              { value: 'blueberry', label: 'Blueberry' },
+              { value: 'grapes', label: 'Grapes' },
+              { value: 'pineapple', label: 'Pineapple' },
             ]}
             className="w-[140px]"
           />
-          <SelectGeneric 
-            label="Grupo Ads" 
+          <SelectGeneric
+            label="Grupo Ads"
             placeholder="Grupo Ads"
             items={[
-              { value: "apple", label: "Apple" },
-              { value: "banana", label: "Banana" },
-              { value: "blueberry", label: "Blueberry" },
-              { value: "grapes", label: "Grapes" },
-              { value: "pineapple", label: "Pineapple" },
+              { value: 'apple', label: 'Apple' },
+              { value: 'banana', label: 'Banana' },
+              { value: 'blueberry', label: 'Blueberry' },
+              { value: 'grapes', label: 'Grapes' },
+              { value: 'pineapple', label: 'Pineapple' },
             ]}
             className="w-[140px]"
           />
@@ -52,14 +51,17 @@ export default function DashboardPage() {
       </div>
       <div className="max-w-[100%] ">
         <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <div className="m-auto p-4">
+          <div className="m-auto p-4">
+            <CardAdComponent />
+          </div>
+          <div className="m-auto p-4">
             <CardAdComponent />
           </div>
           <div className="m-auto p-4">
             <CardAdComponent />
           </div>
           <div className="m-auto p-4">
-            <CardAdComponent />
+            <SkeletonCardCreative />
           </div>
           <div className="m-auto p-4">
             <CardAdComponent />
@@ -102,7 +104,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-     
     </div>
   );
 }
