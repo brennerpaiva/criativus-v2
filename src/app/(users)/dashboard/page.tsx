@@ -5,8 +5,32 @@ import { CardAdComponent } from '@/components/business/cards/card-creative.compo
 import { FilterBarComponent } from '@/components/business/filter/filter-bar.component';
 import { SelectGeneric } from '@/components/business/filter/select-demo';
 import { SkeletonCardCreative } from '@/components/ui/custom/skeleton-card-creative';
+import { useAuth } from '@/context/auth.context';
+import FacebookAdsService from '@/service/graph-api.service';
+import { userModel } from '@/types/model/user.model';
+import { useEffect, useState } from 'react';
 
-export default function DashboardPage() {
+export default  function DashboardPage() {
+  const [data, setData] = useState<userModel[] | null>(null);
+  const { login, user, adAccount, logout } = useAuth();
+  useEffect(() => {
+    async function fetchData() {
+      if (adAccount) {
+        try {
+          const result = await FacebookAdsService.getCreativeInsights(adAccount.account_id);
+          console.log(result);
+          setData(result);
+        } catch (err) {
+          console.log(err)
+        }
+        alert('teste');
+      }
+     
+     
+    }
+    fetchData();
+  }, []);
+
   return (
     <div className="w-full lg:grid lg:min-h-[600px] xl:min-h-[800px]">
       <div>

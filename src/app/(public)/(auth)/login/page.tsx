@@ -1,7 +1,27 @@
-import { LoginFormComponent } from '@/components/business/forms/login-form.component';
-import Image from 'next/image';
+"use client";
+
+import { LoginFormComponent } from "@/components/business/forms/login-form.component";
+import FacebookAdsService from "@/service/graph-api.service";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function LoginPage() {
+  const [adAccounts, setAdAccounts] = useState([]);
+
+  useEffect(() => {
+    async function fetchAdAccounts() {
+      try {
+        const accounts = await FacebookAdsService.getAdAccounts();
+        console.log("Ad Accounts:", accounts);
+        setAdAccounts(accounts);
+      } catch (error) {
+        console.error("Erro ao buscar contas de anúncios:", error);
+      }
+    }
+
+    fetchAdAccounts();
+  }, []);
+  
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
       <div className="flex items-center justify-center py-12">
