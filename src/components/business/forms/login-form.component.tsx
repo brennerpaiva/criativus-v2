@@ -55,7 +55,7 @@ export const LoginFormComponent = () => {
         // await new Promise((resolve) => setTimeout(resolve, 1000));
         // const user = await authService.login(data);
         const user = { 
-          name: 'brenner Paiva Ausgto Asdasd',
+          name: 'Brenner Paiva',
           access_token: '123',
           adAccounts: [] as AdAccount[],
         }
