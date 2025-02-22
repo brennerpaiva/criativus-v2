@@ -4,7 +4,6 @@ import { AppSidebar } from '@/components/business/layout/nav-bar.component';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth.context';
-import FacebookAdsService from '@/service/graph-api.service';
 import userService from '@/service/user.service';
 import { Separator } from '@radix-ui/react-select';
 import { useRouter } from 'next/navigation';
@@ -27,8 +26,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       console.log("Buscando insights para a conta:", adAccount);
       
       if (adAccount) {
-        const insights = await FacebookAdsService.getCreativeInsights(adAccount.id);
-        console.log("Insights obtidos:", insights);
+        // const insights = await FacebookAdsService.getCreativeInsights(adAccount.id);
+        // console.log("Insights obtidos:", insights);
       } else {
         console.log("AdAccount ainda não está disponível.");
       }
@@ -62,12 +61,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="aspect-video rounded-xl bg-muted/50" />
-            <div className="aspect-video rounded-xl bg-muted/50" />
-            <div className="aspect-video rounded-xl bg-muted/50" />
-          </div>
-          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+          {children}
         </div>
       </SidebarInset>
     </SidebarProvider>
