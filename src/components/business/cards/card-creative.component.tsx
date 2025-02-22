@@ -4,45 +4,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
-const notifications = [
-  {
-    title: 'Your call has been confirmed.',
-    description: '1 hour ago',
-  },
-  {
-    title: 'You have a new message!',
-    description: '1 hour ago',
-  },
-  {
-    title: 'Your subscription is expiring soon!',
-    description: '2 hours ago',
-  },
-];
+interface CardAdProps {
+  title: string;
+  imageUrl: string;
+  metrics: { label: string; value: string | number }[];
+}
 
-type CardProps = React.ComponentProps<typeof Card>;
-
-export function CardAdComponent({ className, ...props }: CardProps) {
+export function CardAdComponent({ title, imageUrl, metrics }: CardAdProps) {
   return (
-    <Card className={cn('w-[280px] h-[360px]', className)} {...props}>
+    <Card className={cn('w-100% h-100%')}>
       <CardHeader className="p-0">
         <div className="w-full h-[240px] overflow-hidden">
-          <Image src="/teste.jpg" width={240} height={240} alt="Image" className="w-full" />
+          <Image src={imageUrl} width={241} height={241} alt={title} className="w-full h-full object-cover" />
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3  p-4 overflow-hidden">
+      <CardContent className="flex flex-col gap-3 p-4 overflow-hidden">
         <div className="flex">
-          {/* TODO: Deixar a quebra de parecida com o projeto marvel */}
-          <CardTitle className="text-sm">TESTE</CardTitle>
+          <CardTitle className="text-sm truncate">{title}</CardTitle>
         </div>
         <div className="flex flex-col gap-3">
-          <CardDescription className="flex flex-1 justify-between">
-            <span>Roas</span>
-            <span>50</span>
-          </CardDescription>
-          <CardDescription className="flex flex-1 justify-between">
-            <span>Roas</span>
-            <span>50</span>
-          </CardDescription>
+          {metrics.map((metric, index) => (
+            <CardDescription key={index} className="flex justify-between">
+              <span>{metric.label}</span>
+              <span>{metric.value}</span>
+            </CardDescription>
+          ))}
         </div>
       </CardContent>
     </Card>
