@@ -28,16 +28,20 @@ export interface CreativeGroup {
     impressions: number;
     clicks: number;
     ctr: number;
-    purchaseRoas: number;
-    actions: Record<string, number>; 
+    purchaseRoas: number; // Média do ROAS do grupo
+    actions: Record<string, number>;
+    tumbstock: number;      // (video_view / impressions) * 100
+    clickToPurchase: number; // (purchase / link_click) * 100
+    costPerLandingPageView: number; // Novo: custo por visualização da landing page
+    _roasCount?: number;     // Campo temporário para cálculo da média
   };
 }
 
 export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, CreativeGroup> {
   const grouped = ads.reduce((acc, ad) => {
-    const videoId = ad.creative.object_story_spec?.video_data?.video_id || 0;
+    const videoId = ad.creative.object_story_spec?.video_data?.video_id || "0";
     
-    // Se o grupo para esse criativo ainda não existir, cria-o
+    // Cria o grupo se não existir
     if (!acc[videoId]) {
       acc[videoId] = {
         creative: { ...ad.creative },
@@ -48,11 +52,15 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
           clicks: 0,
           ctr: 0,
           purchaseRoas: 0,
-          actions: {} // inicializa o objeto de ações
+          actions: {},
+          tumbstock: 0,
+          clickToPurchase: 0,
+          costPerLandingPageView: 0,
+          _roasCount: 0,
         },
       };
     } else {
-      // Se já existe, e o grupo ainda não possui object_story_spec, tenta atribuir
+      // Se já existe e o grupo ainda não possui object_story_spec, tenta atribuir
       if (!acc[videoId].creative.object_story_spec && ad.creative.object_story_spec) {
         acc[videoId].creative.object_story_spec = ad.creative.object_story_spec;
       }
@@ -69,8 +77,9 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
       acc[videoId].aggregatedInsights.clicks += parseInt(insight.clicks, 10);
       if (insight.purchase_roas && insight.purchase_roas[0]) {
         acc[videoId].aggregatedInsights.purchaseRoas += parseFloat(insight.purchase_roas[0].value);
+        acc[videoId].aggregatedInsights._roasCount = (acc[videoId].aggregatedInsights._roasCount || 0) + 1;
       }
-      // Agrupa as actions
+      // Agrega as actions
       if (insight.actions) {
         insight.actions.forEach((action) => {
           const actionType = action.action_type;
@@ -86,14 +95,38 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
     return acc;
   }, {} as Record<string, CreativeGroup>);
 
-  // Calcula o CTR agregado para cada grupo
+  // Calcula as métricas agregadas para cada grupo
   Object.values(grouped).forEach((group) => {
-    if (group.aggregatedInsights.impressions > 0) {
-      group.aggregatedInsights.ctr =
-        (group.aggregatedInsights.clicks / group.aggregatedInsights.impressions) * 100;
+    const insights = group.aggregatedInsights;
+    
+    // CTR e tumbstock
+    if (insights.impressions > 0) {
+      insights.ctr = (insights.clicks / insights.impressions) * 100;
+      const videoViews = insights.actions["video_view"] || 0;
+      insights.tumbstock = (videoViews / insights.impressions) * 100;
     } else {
-      group.aggregatedInsights.ctr = 0;
+      insights.ctr = 0;
+      insights.tumbstock = 0;
     }
+    
+    // clickToPurchase: (purchase / link_click) * 100
+    const purchaseCount = insights.actions["purchase"] || 0;
+    const linkClicks = insights.actions["link_click"] || 0;
+    insights.clickToPurchase = linkClicks > 0 ? (purchaseCount / linkClicks) * 100 : 0;
+    
+    // Média de purchaseRoas para o grupo
+    if (insights._roasCount && insights._roasCount > 0) {
+      insights.purchaseRoas = insights.purchaseRoas / insights._roasCount;
+    } else {
+      insights.purchaseRoas = 0;
+    }
+    
+    // Cálculo do costPerLandingPageView: spend / landing_page_view
+    const landingPageViews = insights.actions["landing_page_view"] || 0;
+    insights.costPerLandingPageView = landingPageViews > 0 ? insights.spend / landingPageViews : 0;
+    
+    // Remove o campo temporário
+    delete insights._roasCount;
   });
 
   return grouped;
