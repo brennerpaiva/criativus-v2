@@ -11,20 +11,20 @@ import '../../assets/styles/globals.css';
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { login, user, adAccount, logout, loading } = useAuth();
+  const { login, user, activeAdAccount, logout, loading } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true); // Mudar para false se necessário
 
   useEffect(() => {
-    if (adAccount) {
+    if (activeAdAccount) {
       fetchData();
     }
-  }, [adAccount]);
+  }, [activeAdAccount]);
 
   async function fetchData() {
     try {
-      console.log("Buscando insights para a conta:", adAccount);
+      console.log("Buscando insights para a conta:", activeAdAccount);
       
-      if (adAccount) {
+      if (activeAdAccount) {
         // const insights = await FacebookAdsService.getCreativeInsights(adAccount.id);
         // console.log("Insights obtidos:", insights);
       } else {
@@ -46,7 +46,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Building Your Application</BreadcrumbLink>
+                  <BreadcrumbLink href="#">{ activeAdAccount?.name }</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
