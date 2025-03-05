@@ -4,7 +4,6 @@ import { AppSidebar } from '@/components/business/layout/nav-bar.component';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth.context';
-import userService from '@/service/user.service';
 import { Separator } from '@radix-ui/react-select';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
