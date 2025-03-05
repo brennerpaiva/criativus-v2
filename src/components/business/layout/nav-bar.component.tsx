@@ -158,7 +158,7 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { login, user, adAccount, logout } = useAuth();
+  const { login, user, logout } = useAuth();
   console.log(user);
   return (
     <Sidebar collapsible="icon" {...props}>

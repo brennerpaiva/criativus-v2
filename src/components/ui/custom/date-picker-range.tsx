@@ -8,9 +8,9 @@ import { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -107,11 +107,11 @@ export function DatePickerWithRange({
 
             {/* Footer com os botões */}
             <div className="mt-4 flex justify-end space-x-2">
-              <Button size={"sm"} variant="outline" onClick={handleCancel}>
-                Cancel
+              <Button size={"sm"} variant="secondary" onClick={handleCancel}>
+                Cancelar
               </Button>
-              <Button size={"sm"} variant="default" onClick={handleApply}>
-                Apply
+              <Button size={"sm"} variant="secondary" onClick={handleApply}>
+                Aplicar
               </Button>
             </div>
           </div>

@@ -1,6 +1,4 @@
-"use client"
-
-import { ChevronsUpDown, Plus } from "lucide-react"
+'use client';
 
 import {
   DropdownMenu,
@@ -10,19 +8,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { useAuth } from "@/context/auth.context"
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/context/auth.context";
+import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { useEffect } from "react";
 
 export function TeamSwitcher() {
-  const { isMobile } = useSidebar()
-  const { login, user, adAccount, logout, switchAdAccount } = useAuth();
-  console.log(adAccount)
+  const { isMobile } = useSidebar();
+  const { user, activeAdAccount, adAccounts, switchAdAccount, findAdAccounts } = useAuth();
+
+  // Se o usuário estiver logado e a lista de empresas estiver vazia, dispara a busca.
+  useEffect(() => {
+    console.log(user)
+    if (user && user.accessTokenFb && (adAccounts === null || adAccounts.length === 0)) {
+      findAdAccounts();
+    }
+  }, [user, adAccounts, findAdAccounts]);
 
   return (
     <SidebarMenu>
@@ -33,28 +40,19 @@ export function TeamSwitcher() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {/* <activeTeam.logo className="size-4" /> */}
+              <div className="flex aspect-square w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                {/* Ícone ou logo da conta */}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {adAccount?.name}
+                  {activeAdAccount?.name || "Selecione uma conta"}
                 </span>
-                {/* <span className="truncate text-xs">{activeTeam.plan}</span> */}
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="
-              w-[--radix-dropdown-menu-trigger-width]
-              min-w-56
-              rounded-lg
-              mt-1
-              mb-1
-              max-h-screen
-              overflow-y-auto
-            "
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg mt-1 mb-1 max-h-screen overflow-y-auto"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
@@ -62,23 +60,33 @@ export function TeamSwitcher() {
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Teams
             </DropdownMenuLabel>
-            {user?.adAccounts.map((account, index) => (
-              <DropdownMenuItem
-                key={account.id}
-                onClick={() => switchAdAccount(account)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-sm border">
-                  {/* <team.logo className="size-4 shrink-0" /> */}
-                </div>
-                {account.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+            {adAccounts === null ? (
+              <DropdownMenuItem className="p-2 text-sm text-muted-foreground flex items-center">
+                <Loader2 className="animate-spin w-4 h-4 mr-2" /> Carregando...
               </DropdownMenuItem>
-            ))}
+            ) : adAccounts.length === 0 ? (
+              <DropdownMenuItem className="p-2 text-sm text-muted-foreground">
+                Nenhuma conta disponível
+              </DropdownMenuItem>
+            ) : (
+              adAccounts.map((account, index) => (
+                <DropdownMenuItem
+                  key={account.id}
+                  onClick={() => switchAdAccount(account)}
+                  className="gap-2 p-2"
+                >
+                  <div className="flex w-6 items-center justify-center rounded-sm border">
+                    {/* Ícone ou logo da conta */}
+                  </div>
+                  {account.name}
+                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              ))
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                <Plus className="size-4" />
+              <div className="flex w-6 items-center justify-center rounded-md border bg-background">
+                <Plus className="w-4 h-4" />
               </div>
               <div className="font-medium text-muted-foreground">Add team</div>
             </DropdownMenuItem>
@@ -86,5 +94,5 @@ export function TeamSwitcher() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
