@@ -1,5 +1,6 @@
 // src/services/apiClient.js
 import axios from 'axios';
+import nookies from 'nookies';
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -12,28 +13,27 @@ const apiClient = axios.create({
 // Interceptor para adicionar o token de autenticação em cada requisição
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    // Lê os cookies do navegador
+    const cookies = nookies.get(null);
+    const token = cookies.access_token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    console.log(error)
-   
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptador de resposta para tratar erros globalmente
+// Interceptor de resposta para tratar erros globalmente
 apiClient.interceptors.response.use(
-  response => response,
-  error => {
+  (response) => response,
+  (error) => {
     if (error.response?.status === 401) {
+      // Exemplo de tratamento para 401
       if (error.response?.role === 'admin') {
-        return alert('não tem permissão para isso')
+        alert('Você não tem permissão para isso.');
       }
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
+      // Outras ações, como redirecionar para o login, podem ser implementadas aqui
     }
     return Promise.reject(error);
   }
