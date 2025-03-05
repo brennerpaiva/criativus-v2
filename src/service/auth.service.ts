@@ -1,4 +1,5 @@
 import { LoginDto } from "@/types/dto/login.dto";
+import { SignInDto } from "@/types/dto/sign-up.dto";
 import { userModel } from "@/types/model/user.model";
 import apiClient from "./api-cliente.service";
 
@@ -6,20 +7,25 @@ class AuthService {
   /**
    * Realiza o login do usuário com as credenciais fornecidas.
    * @param {LoginDto} credentials - Credenciais do usuário (email e senha).
-   * @returns {Promise<userModel>} Dados do usuário retornados pela API.
+   * @returns {Promise<string>} Dados do usuário retornados em JWT.
    */
-  async login(credentials: LoginDto): Promise<userModel> {
-    const response = await apiClient.post<userModel>('/auth/login', credentials);
-    return response.data;
+  async login(credentials: LoginDto): Promise<string> {
+    const response = await apiClient.post<{ access_token: string }>('/auth/login', credentials);
+  return response.data.access_token;
   }
+
+  async createTokenFacebook(code: string): Promise<userModel> {
+    const response = await apiClient.post<userModel>('/auth/facebook/callback', {code})
+    return response.data;
+  }  
 
   /**
    * Realiza o cadastro de um novo usuário com os dados fornecidos.
-   * @param {Partial<userModel>} userDetails - Detalhes do usuário para cadastro.
+   * @param {SignInDto} signInDto - Detalhes do usuário para cadastro.
    * @returns {Promise<userModel>} Dados do usuário retornados pela API.
    */
-  async signup(userDetails: Partial<userModel>): Promise<userModel> {
-    const response = await apiClient.post<userModel>('/users', userDetails);
+  async signUp(signInDto: SignInDto): Promise<userModel> {
+    const response = await apiClient.post<userModel>('/users', signInDto);
 
     // Armazena o token no localStorage, se necessário
     // if (typeof window !== 'undefined') {

@@ -31,9 +31,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       } else {
         console.log("AdAccount ainda não está disponível.");
       }
-
-      const users = await userService.findAllUsers();
-      console.log("Usuários encontrados:", users);
     } catch (err) {
       console.error("Erro ao buscar dados:", err);
     }

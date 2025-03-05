@@ -1,22 +1,21 @@
 "use client";
 
-import { LoginFormComponent } from "@/components/business/forms/login-form.component";
-import FacebookAdsService from "@/service/graph-api.service";
+import { SignInFormComponent } from "@/components/business/forms/sign-in-form.component";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-export default function LoginPage() {
+export default function SignInPage() {
   const [adAccounts, setAdAccounts] = useState([]);
 
   useEffect(() => {
     async function fetchAdAccounts() {
-      try {
-        const accounts = await FacebookAdsService.getAdAccounts();
-        console.log("Ad Accounts:", accounts);
-        setAdAccounts(accounts);
-      } catch (error) {
-        console.error("Erro ao buscar contas de anúncios:", error);
-      }
+      // try {
+      //   const accounts = await FacebookAdsService.getAdAccounts();
+      //   // console.log("Ad Accounts:", accounts);
+      //   // setAdAccounts(accounts);
+      // } catch (error) {
+      //   console.error("Erro ao buscar contas de anúncios:", error);
+      // }
     }
 
     fetchAdAccounts();
@@ -27,12 +26,12 @@ export default function LoginPage() {
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">Login</h1>
+            <h1 className="text-3xl font-bold">SignIn</h1>
             <p className="text-balance text-muted-foreground">
               Enter your email below to login to your account
             </p>
           </div>
-          <LoginFormComponent />
+          <SignInFormComponent />
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{' '}
             <a href="/signup" className="underline">

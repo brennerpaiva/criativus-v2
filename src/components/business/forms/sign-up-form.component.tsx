@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { signUpUserFormSchema } from '@/schemas/auth.schema';
 import AuthService from '@/service/auth.service';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -13,6 +14,7 @@ import { z } from 'zod';
 export const SignUpFormComponent = () => {
   type SignUpUserFormData = z.infer<typeof signUpUserFormSchema>;
   const authService = new AuthService();
+  const router = useRouter();
   const [output, setOutput] = useState('');
   const {
     register,
@@ -25,10 +27,11 @@ export const SignUpFormComponent = () => {
     setOutput(JSON.stringify(data, null, 2));
     console.log(data);
     try {
-      const { token } = await authService.signup(data);
-      alert('Registrou')
+      await authService.signUp(data);
+      router.push('/login');
     } catch (err) {
-      console.error('Falha ao registrar o usuário:', err);
+      console.log(err);
+      alert('Falha ao registrar o usuário:');
       // Tratar a falha apropriadamente, por exemplo, mostrar uma mensagem de erro ao usuário
     }
   };
@@ -75,7 +78,6 @@ export const SignUpFormComponent = () => {
       <Button type="submit" className="w-full">
         Criar Conta
       </Button>
-      <div>{output}</div>
     </form>
   );
 };
