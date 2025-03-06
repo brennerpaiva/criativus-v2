@@ -17,6 +17,7 @@ import {
   sortGroupsByPurchases,
 } from "@/utils/creative.util";
 import { Loader2 } from "lucide-react";
+import SnapshotService from "@/service/snapshot.service";
 
 export default function DashboardPage() {
   const { activeAdAccount, loginWithFacebook } = useAuth();
@@ -116,13 +117,27 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="w-full h-full max-w-screen-xl mx-auto flex flex-col gap-6">
+    <div className="w-full h-full max-w-screen-xl mx-auto flex flex-col justify-around gap-6 mt-6 mb-6">
       <div className="flex my-auto">
         <img src="fire.gif" alt="" className="w-10" />
         <h1 className="text-3xl font-bold text-center my-auto">Top Criativos</h1>
         {/* <button onClick={loginWithFacebook}>
           Entrar com Facebook
         </button> */}
+        <button
+          onClick={async () => {
+            if (!groupedData) return;
+            const slug = await SnapshotService.createSnapshot(groupedData);
+            if (slug) {
+              // Monta a URL pública, por ex.:
+              const publicUrl = `${window.location.origin}/snapshot/${slug}`;
+              alert(`Link público criado: ${publicUrl}`);
+              // Ou redireciona para lá, ou copia para a área de transferência, etc.
+            }
+          }}
+        >
+          Criar Link Publico
+        </button>
       </div>
 
       <FilterBarComponent>
@@ -138,9 +153,9 @@ export default function DashboardPage() {
       <div className="max-w-[100%] h-full flex">
         {isLoading ? (
           <div className="m-auto h-full my-auto flex items-center">
-            <Loader2  className="animate-spin" />
+            <Loader2 className="animate-spin" />
           </div>
-        ) : groupedData ? (
+        ) : groupedData && groupedData.length > 0 ? (
           <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {groupedData.map((group) => {
               const firstAd = group.ads[0];
@@ -152,17 +167,12 @@ export default function DashboardPage() {
                 <div key={creative.id}>
                   <CardAdComponent
                     title={title}
-                    // Imagem de fallback caso não exista poster
                     imageUrl={poster || "/teste.png"}
                     metrics={[
                       {
                         label: "Compras",
                         value: group.aggregatedInsights.actions.purchase ?? 0,
                       },
-                      // {
-                      //   label: "ROAS",
-                      //   value: group.aggregatedInsights.purchaseRoas.toFixed(2),
-                      // },
                       {
                         label: "Gasto Total",
                         value: group.aggregatedInsights.spend.toFixed(2),
@@ -185,13 +195,9 @@ export default function DashboardPage() {
                       },
                     ]}
                     onCardClick={() => {
-                      // Se existir um video_id, busca o source
                       const videoId = creative.object_story_spec?.video_data?.video_id;
                       if (videoId) {
                         searchVideoCreative(videoId, poster, title);
-                      } else {
-                        // Se não há video_id, pode apenas abrir o card sem vídeo ou não fazer nada
-                        console.warn("Este criativo não possui video_id.");
                       }
                     }}
                   />
@@ -200,9 +206,12 @@ export default function DashboardPage() {
             })}
           </div>
         ) : (
-          <div className="min-h-full h-full flex">Nenhum dado encontrado.</div>
+          <div className="m-auto h-full my-auto flex items-center">
+            Nenhum dado encontrado
+          </div>
         )}
       </div>
+
 
       {/* COMPONENTE FLOTANTE NO CANTO INFERIOR DIREITO */}
       <FloatingVideoCard
