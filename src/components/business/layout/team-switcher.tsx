@@ -1,35 +1,45 @@
-'use client';
+"use client"
+
+import { ChevronsUpDown, Loader2, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
+
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { useAuth } from "@/context/auth.context";
-import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
-import { useEffect } from "react";
+} from "@/components/ui/sidebar"
+
+import { useAuth } from "@/context/auth.context"
 
 export function TeamSwitcher() {
-  const { isMobile } = useSidebar();
-  const { user, activeAdAccount, adAccounts, switchAdAccount, findAdAccounts } = useAuth();
+  const { isMobile } = useSidebar()
+  const { user, activeAdAccount, adAccounts, switchAdAccount, findAdAccounts } = useAuth()
 
-  // Se o usuário estiver logado e a lista de empresas estiver vazia, dispara a busca.
+  // Estado local para armazenar o texto digitado no campo de busca
+  const [searchTerm, setSearchTerm] = useState("")
+
+  // Se o usuário estiver logado e a lista de contas estiver vazia, dispara a busca.
   useEffect(() => {
-    console.log(user)
     if (user && user.accessTokenFb && (adAccounts === null || adAccounts.length === 0)) {
-      findAdAccounts();
+      findAdAccounts()
     }
-  }, [user, adAccounts, findAdAccounts]);
+  }, [user, adAccounts, findAdAccounts])
+
+  // Filtra as contas pelo campo de busca
+  const filteredAdAccounts =
+    adAccounts?.filter((account) =>
+      account.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) ?? []
 
   return (
     <SidebarMenu>
@@ -52,27 +62,65 @@ export function TeamSwitcher() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg mt-1 mb-1 max-h-screen overflow-y-auto"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
+            className="mt-1 mb-1 w-[--radix-dropdown-menu-trigger-width] min-w-56 max-h-[95vh] overflow-y-auto rounded-lg"
+            
+            // Impede que o dropdown tente re-focar algo ao fechar
+            onCloseAutoFocus={(e) => e.preventDefault()}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Teams
-            </DropdownMenuLabel>
+            {/* 
+              Div para o input de busca.
+              onKeyDown para parar a propagação e desativar a "typeahead" do menu.
+            */}
+            <div
+              className="px-2 py-1"
+              onKeyDown={(e) => {
+                e.stopPropagation()
+              }}
+            >
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar conta..."
+                className="
+                  w-full
+                  rounded-sm
+                  border
+                  border-input
+                  bg-background
+                  p-1
+                  text-sm
+                  placeholder:text-muted-foreground
+                  focus:outline-none
+                "
+              />
+            </div>
+
+            <DropdownMenuSeparator />
+
+            {/* Se ainda estiver carregando as contas */}
             {adAccounts === null ? (
-              <DropdownMenuItem className="p-2 text-sm text-muted-foreground flex items-center">
-                <Loader2 className="animate-spin w-4 h-4 mr-2" /> Carregando...
+              <DropdownMenuItem className="flex items-center p-2 text-sm text-muted-foreground">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Carregando...
               </DropdownMenuItem>
-            ) : adAccounts.length === 0 ? (
+            ) : filteredAdAccounts.length === 0 ? (
+              // Se não houver contas ou nenhuma bate com o filtro
               <DropdownMenuItem className="p-2 text-sm text-muted-foreground">
                 Nenhuma conta disponível
               </DropdownMenuItem>
             ) : (
-              adAccounts.map((account, index) => (
+              // Caso contrário, mostra as contas filtradas
+              filteredAdAccounts.map((account, index) => (
                 <DropdownMenuItem
                   key={account.id}
-                  onClick={() => switchAdAccount(account)}
+                  onClick={() => {
+                    switchAdAccount(account)
+                    // Se quiser fechar o dropdown após selecionar, não chame preventDefault.
+                  }}
                   className="gap-2 p-2"
                 >
                   <div className="flex w-6 items-center justify-center rounded-sm border">
@@ -83,10 +131,12 @@ export function TeamSwitcher() {
                 </DropdownMenuItem>
               ))
             )}
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem className="gap-2 p-2">
               <div className="flex w-6 items-center justify-center rounded-md border bg-background">
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
               </div>
               <div className="font-medium text-muted-foreground">Add team</div>
             </DropdownMenuItem>
@@ -94,5 +144,5 @@ export function TeamSwitcher() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  );
+  )
 }
