@@ -102,6 +102,9 @@ export interface CallToActionValue {
     slug: string;
     data: string; // JSON serializado, que deve ser parseado para SnapshotData
     createdAt: string;
+    since: string;
+    until: string;
+    comment: string;
   }
   
   
