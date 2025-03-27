@@ -15,7 +15,7 @@ interface CardAdProps {
 export function CardAdComponent({ title, imageUrl, metrics, onCardClick }: CardAdProps) {
   return (
     <TooltipProvider>
-      <Card className={cn("w-full h-full")} onClick={onCardClick}>
+      <Card className={cn("w-full h-fit")} onClick={onCardClick}>
         <CardHeader className="p-0 cursor-pointer">
           <div className="w-full h-[240px] overflow-hidden">
             <Image

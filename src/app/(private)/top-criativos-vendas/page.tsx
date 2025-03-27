@@ -27,7 +27,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
-export default function DashboardPage() {
+export default function TopCriativosVendasPage() {
   const router = useRouter();
   const { activeAdAccount } = useAuth();
   const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                 <div key={creative.id}>
                   <CardAdComponent
                     title={title}
-                    imageUrl={poster || "/teste.png"}
+                    imageUrl={poster || "/teste.jpg"}
                     metrics={[
                       {
                         label: "Compras",

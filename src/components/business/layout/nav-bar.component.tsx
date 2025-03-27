@@ -49,17 +49,17 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Top Criativos",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "Top Criativos - Vendas",
-          url: "/dashboard",
+          title: "Vendas",
+          url: "/top-criativos-vendas",
         },
         {
-          title: "Top Criativos - Visitas",
+          title: "Visitas",
           url: "/dashboard",
         },
         {
