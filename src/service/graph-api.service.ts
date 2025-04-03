@@ -25,7 +25,7 @@ function getFacebookToken(): string {
 const FacebookAdsService = {
   async getAdAccounts(): Promise<AdAccount[]> {
     const tokenFb = getFacebookToken();
-    const response = await axios.get(`${FACEBOOK_API_URL}/me/adaccounts?limit=60`, {
+    const response = await axios.get(`${FACEBOOK_API_URL}/me/adaccounts?limit=300`, {
       params: {
         fields:
           "id,account_id,name,account_status,currency,amount_spent,balance,timezone_name,business",
@@ -123,7 +123,7 @@ const FacebookAdsService = {
       "id",
       "name",
       "effective_status",
-      "creative{id,name,object_story_spec}",
+      "creative{id,name,object_story_spec,image_url,thumbnail_url}",
       `insights.time_range(${JSON.stringify(timeRange)}){spend,impressions,clicks,ctr,date_start,date_stop,actions,purchase_roas}`
     ].join(",");
     const response = await axios.get<PaginatedResponseFacebook<AdCreativeInsight>>(
@@ -132,7 +132,7 @@ const FacebookAdsService = {
         params: {
           fields,
           filtering: JSON.stringify(filtering),
-          limit: 200,
+          limit: 1000,
           access_token: tokenFb,
         },
       }
