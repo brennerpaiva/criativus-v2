@@ -34,7 +34,7 @@ export default function DashboardPage() {
         path: '/' 
       });
       await findAdAccounts();
-      router.push("/dashboard");
+      router.push("/top-criativos-vendas");
       setLoading(false);
     } catch (error) {
       console.error("Erro ao buscar o profile:", error);

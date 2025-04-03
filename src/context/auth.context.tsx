@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         return await loginWithFacebook();
       }
-      router.push('/dashboard');
+      router.push('/top-criativos-vendas');
    
   }, [authService, findAdAccounts, router]);
 
