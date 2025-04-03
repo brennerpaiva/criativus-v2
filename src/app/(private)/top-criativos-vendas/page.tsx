@@ -241,24 +241,36 @@ export default function TopCriativosVendasPage() {
                     imageUrl={poster || "/teste.jpg"}
                     metrics={[
                       {
-                        label: "Compras",
-                        value: group.aggregatedInsights.actions.purchase ?? 0,
-                      },
-                      {
-                        label: "Gasto Total",
-                        value: group.aggregatedInsights.spend.toFixed(2),
-                      },
-                      {
                         label: "Tumbstop",
                         value: `${group.aggregatedInsights.tumbstock.toFixed(2)}%`,
                       },
                       {
-                        label: "Click to purchase",
-                        value: `${group.aggregatedInsights.clickToPurchase.toFixed(2)}%`,
+                        label: "CTR (link click)",
+                        value: `${group.aggregatedInsights.ctrLinkClick.toFixed(2) ?? 0}%` ,
                       },
                       {
-                        label: "Custo por LP view",
-                        value: `R$${group.aggregatedInsights.costPerLandingPageView.toFixed(2)}`,
+                        label: "Custo por Compra Site",
+                        value: `$ ${group.aggregatedInsights.costSitePurchase.toFixed(2) ?? 0}`,
+                      },
+                      {
+                        label: "Compras",
+                        value: group.aggregatedInsights.actions.purchase ?? 0,
+                      },
+                      // {
+                      //   label: "Gasto Total",
+                      //   value: group.aggregatedInsights.spend.toFixed(2),
+                      // },
+                      {
+                        label: "Click to purchase",
+                        value: `${group.aggregatedInsights.clickToPurchase.toFixed(2) ?? 0}%`,
+                      },
+                      // {
+                      //   label: "Custo por LP view",
+                      //   value: `R$${group.aggregatedInsights.costPerLandingPageView.toFixed(2)}`,
+                      // },
+                      {
+                        label: "Roas",
+                        value: `${group.aggregatedInsights.roasCustom.toFixed(2) ?? 0}`,
                       },
                     ]}
                     onCardClick={() => {

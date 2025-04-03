@@ -6,7 +6,7 @@ export interface CreativeGroup {
   creative: { 
     id: string;
     name?: string;
-    thumbnail_url?: string,
+    thumbnail_url?: string;
     object_story_spec?: {
       instagram_user_id: string;
       page_id: string;
@@ -29,20 +29,25 @@ export interface CreativeGroup {
     impressions: number;
     clicks: number;
     ctr: number;
-    purchaseRoas: number; // Média do ROAS do grupo
+    purchaseRoas: number;            // Média do ROAS do grupo (do FB)
+    roasCustom: number;              // Novo: média ponderada de purchase_roas
     actions: Record<string, number>;
-    tumbstock: number;      // (video_view / impressions) * 100
-    clickToPurchase: number; // (purchase / link_click) * 100
-    costPerLandingPageView: number; // Novo: custo por visualização da landing page
-    _roasCount?: number;     // Campo temporário para cálculo da média
+    tumbstock: number;               // (video_view / impressions) * 100
+    clickToPurchase: number;         // (purchase / link_click) * 100
+    costPerLandingPageView: number;  // custo por visualização da landing page
+    ctrLinkClick: number;            // (link_click / impressions) * 100
+    costSitePurchase: number;        // spend / "purchase"
+    
+    _roasCount?: number;             // Campo temporário para calcular média de roas do FB
+    _purchaseValueSum?: number;      // Soma parcial de "receita" (purchase_roas * spend)
   };
 }
 
 export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, CreativeGroup> {
   const grouped = ads.reduce((acc, ad) => {
+    // Se o anúncio tiver video_data, agrupa pelo ID do vídeo; senão, agrupa pelo ID do creative
     const groupKey = ad.creative.object_story_spec?.video_data?.video_id || ad.creative.id;
-    //CONFERIR SE OS GRUPOS ESTÃO CORRETOS
-    
+
     // Cria o grupo se não existir
     if (!acc[groupKey]) {
       acc[groupKey] = {
@@ -54,11 +59,17 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
           clicks: 0,
           ctr: 0,
           purchaseRoas: 0,
+          roasCustom: 0,
           actions: {},
           tumbstock: 0,
           clickToPurchase: 0,
           costPerLandingPageView: 0,
+          ctrLinkClick: 0,
+          costSitePurchase: 0,
+
+          // Campos internos para cálculo
           _roasCount: 0,
+          _purchaseValueSum: 0,
         },
       };
     } else {
@@ -71,73 +82,105 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
     // Adiciona o anúncio ao grupo
     acc[groupKey].ads.push(ad);
 
-    // Agrega os dados dos insights do anúncio, se disponíveis
+    // Agrega os dados do insight desse anúncio, se houver
     const insight = ad.insights?.data?.[0];
     if (insight) {
-      acc[groupKey].aggregatedInsights.spend += parseFloat(insight.spend);
-      acc[groupKey].aggregatedInsights.impressions += parseInt(insight.impressions, 10);
-      acc[groupKey].aggregatedInsights.clicks += parseInt(insight.clicks, 10);
+      const groupInsights = acc[groupKey].aggregatedInsights;
+
+      // soma spends/impressões/cliques
+      const spend = parseFloat(insight.spend);
+      groupInsights.spend += spend;
+      groupInsights.impressions += parseInt(insight.impressions, 10);
+      groupInsights.clicks += parseInt(insight.clicks, 10);
+
+      // Soma a métrica de purchase_roas do FB
       if (insight.purchase_roas && insight.purchase_roas[0]) {
-        acc[groupKey].aggregatedInsights.purchaseRoas += parseFloat(insight.purchase_roas[0].value);
-        acc[groupKey].aggregatedInsights._roasCount = (acc[groupKey].aggregatedInsights._roasCount || 0) + 1;
+        const roasFB = parseFloat(insight.purchase_roas[0].value);
+        groupInsights.purchaseRoas += roasFB;
+        groupInsights._roasCount! += 1;
+
+        // Também multiplica roasFB * spend para somar à receita total do grupo
+        groupInsights._purchaseValueSum! += roasFB * spend;
       }
+
       // Agrega as actions
       if (insight.actions) {
         insight.actions.forEach((action) => {
           const actionType = action.action_type;
-          const value = parseInt(action.value, 10);
-          if (acc[groupKey].aggregatedInsights.actions[actionType]) {
-            acc[groupKey].aggregatedInsights.actions[actionType] += value;
-          } else {
-            acc[groupKey].aggregatedInsights.actions[actionType] = value;
-          }
+          const value = parseFloat(action.value) || 0;
+          groupInsights.actions[actionType] = (groupInsights.actions[actionType] || 0) + value;
         });
       }
     }
+
     return acc;
   }, {} as Record<string, CreativeGroup>);
 
-  // Calcula as métricas agregadas para cada grupo
+  // Calcula as métricas finais de cada grupo
   Object.values(grouped).forEach((group) => {
     const insights = group.aggregatedInsights;
-    
-    // CTR e tumbstock
+    const { actions } = insights;
+
+    // CTR = (clicks / impressions) * 100
     if (insights.impressions > 0) {
       insights.ctr = (insights.clicks / insights.impressions) * 100;
-      const videoViews = insights.actions["video_view"] || 0;
-      insights.tumbstock = (videoViews / insights.impressions) * 100;
-    } else {
-      insights.ctr = 0;
-      insights.tumbstock = 0;
     }
-    
-    // clickToPurchase: (purchase / link_click) * 100
-    const purchaseCount = insights.actions["purchase"] || 0;
-    const linkClicks = insights.actions["link_click"] || 0;
+
+    // ctrLinkClick = (link_click / impressions) * 100
+    const linkClicks = actions["link_click"] || 0;
+    if (insights.impressions > 0) {
+      insights.ctrLinkClick = (linkClicks / insights.impressions) * 100;
+    }
+
+    // tumbstock = (video_view / impressions) * 100
+    const videoViews = actions["video_view"] || 0;
+    if (insights.impressions > 0) {
+      insights.tumbstock = (videoViews / insights.impressions) * 100;
+    }
+
+    // clickToPurchase = (purchase / link_click) * 100
+    const purchaseCount = actions["purchase"] || 0; 
     insights.clickToPurchase = linkClicks > 0 ? (purchaseCount / linkClicks) * 100 : 0;
-    
-    // Média de purchaseRoas para o grupo
+
+    // Se tiver ROAS do FB, faz a média
     if (insights._roasCount && insights._roasCount > 0) {
       insights.purchaseRoas = insights.purchaseRoas / insights._roasCount;
     } else {
       insights.purchaseRoas = 0;
     }
-    
-    // Cálculo do costPerLandingPageView: spend / landing_page_view
-    const landingPageViews = insights.actions["landing_page_view"] || 0;
-    insights.costPerLandingPageView = landingPageViews > 0 ? insights.spend / landingPageViews : 0;
-    
-    // Remove o campo temporário
+
+    // roasCustom = (soma da receita) / (spend total)
+    // onde "receita" de cada anúncio = roasDoFB * spend
+    if (insights.spend > 0) {
+      insights.roasCustom = insights._purchaseValueSum! / insights.spend;
+    } else {
+      insights.roasCustom = 0;
+    }
+
+    // costPerLandingPageView = spend / landing_page_view
+    const landingPageViews = actions["landing_page_view"] || 0;
+    insights.costPerLandingPageView =
+      landingPageViews > 0 ? insights.spend / landingPageViews : 0;
+
+    // costSitePurchase = spend / purchase
+    insights.costSitePurchase = purchaseCount > 0
+      ? insights.spend / purchaseCount
+      : 0;
+
+    // Remove campos temporários
     delete insights._roasCount;
+    delete insights._purchaseValueSum;
   });
 
   return grouped;
 }
 
-export function sortGroupsByPurchases(grouped: Record<string, CreativeGroup>): CreativeGroup[] {
+export function sortGroupsByPurchases(
+  grouped: Record<string, CreativeGroup>
+): CreativeGroup[] {
   return Object.values(grouped).sort((a, b) => {
-    const purchaseA = a.aggregatedInsights.actions?.purchase ?? 0;
-    const purchaseB = b.aggregatedInsights.actions?.purchase ?? 0;
-    return purchaseB - purchaseA; // Ordena do maior para o menor
+    const purchaseA = a.aggregatedInsights.actions.purchase ?? 0;
+    const purchaseB = b.aggregatedInsights.actions.purchase ?? 0;
+    return purchaseB - purchaseA; // maior para menor
   });
 }
