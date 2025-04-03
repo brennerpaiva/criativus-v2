@@ -231,7 +231,7 @@ export default function TopCriativosVendasPage() {
             {groupedData.map((group) => {
               const firstAd = group.ads[0];
               const creative = group.creative;
-              const poster = creative.object_story_spec?.video_data?.image_url;
+              const poster = creative.object_story_spec?.video_data?.image_url || group.creative.thumbnail_url;
               const title = firstAd.name || creative.id;
 
               return (

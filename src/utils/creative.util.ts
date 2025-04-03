@@ -6,6 +6,7 @@ export interface CreativeGroup {
   creative: { 
     id: string;
     name?: string;
+    thumbnail_url?: string,
     object_story_spec?: {
       instagram_user_id: string;
       page_id: string;
@@ -39,11 +40,12 @@ export interface CreativeGroup {
 
 export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, CreativeGroup> {
   const grouped = ads.reduce((acc, ad) => {
-    const videoId = ad.creative.object_story_spec?.video_data?.video_id || "0";
+    const groupKey = ad.creative.object_story_spec?.video_data?.video_id || ad.creative.id;
+    //CONFERIR SE OS GRUPOS ESTÃO CORRETOS
     
     // Cria o grupo se não existir
-    if (!acc[videoId]) {
-      acc[videoId] = {
+    if (!acc[groupKey]) {
+      acc[groupKey] = {
         creative: { ...ad.creative },
         ads: [],
         aggregatedInsights: {
@@ -61,33 +63,33 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
       };
     } else {
       // Se já existe e o grupo ainda não possui object_story_spec, tenta atribuir
-      if (!acc[videoId].creative.object_story_spec && ad.creative.object_story_spec) {
-        acc[videoId].creative.object_story_spec = ad.creative.object_story_spec;
+      if (!acc[groupKey].creative.object_story_spec && ad.creative.object_story_spec) {
+        acc[groupKey].creative.object_story_spec = ad.creative.object_story_spec;
       }
     }
 
     // Adiciona o anúncio ao grupo
-    acc[videoId].ads.push(ad);
+    acc[groupKey].ads.push(ad);
 
     // Agrega os dados dos insights do anúncio, se disponíveis
     const insight = ad.insights?.data?.[0];
     if (insight) {
-      acc[videoId].aggregatedInsights.spend += parseFloat(insight.spend);
-      acc[videoId].aggregatedInsights.impressions += parseInt(insight.impressions, 10);
-      acc[videoId].aggregatedInsights.clicks += parseInt(insight.clicks, 10);
+      acc[groupKey].aggregatedInsights.spend += parseFloat(insight.spend);
+      acc[groupKey].aggregatedInsights.impressions += parseInt(insight.impressions, 10);
+      acc[groupKey].aggregatedInsights.clicks += parseInt(insight.clicks, 10);
       if (insight.purchase_roas && insight.purchase_roas[0]) {
-        acc[videoId].aggregatedInsights.purchaseRoas += parseFloat(insight.purchase_roas[0].value);
-        acc[videoId].aggregatedInsights._roasCount = (acc[videoId].aggregatedInsights._roasCount || 0) + 1;
+        acc[groupKey].aggregatedInsights.purchaseRoas += parseFloat(insight.purchase_roas[0].value);
+        acc[groupKey].aggregatedInsights._roasCount = (acc[groupKey].aggregatedInsights._roasCount || 0) + 1;
       }
       // Agrega as actions
       if (insight.actions) {
         insight.actions.forEach((action) => {
           const actionType = action.action_type;
           const value = parseInt(action.value, 10);
-          if (acc[videoId].aggregatedInsights.actions[actionType]) {
-            acc[videoId].aggregatedInsights.actions[actionType] += value;
+          if (acc[groupKey].aggregatedInsights.actions[actionType]) {
+            acc[groupKey].aggregatedInsights.actions[actionType] += value;
           } else {
-            acc[videoId].aggregatedInsights.actions[actionType] = value;
+            acc[groupKey].aggregatedInsights.actions[actionType] = value;
           }
         });
       }
