@@ -122,7 +122,7 @@ export default function SnapshotPage() {
                     <div key={creative.id}>
                       <CardAdComponent
                         title={title}
-                        imageUrl={poster || "/teste.png"}
+                        thumbUrl={poster || "/teste.png"}
                         metrics={[
                           {
                             label: "Compras",

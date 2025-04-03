@@ -109,6 +109,7 @@ export default function TopCriativosVendasPage() {
       // 3. Agrupa e ordena
       const grouped = groupAdsByCreative(adsDesorganizados);
       const sortedGroups = sortGroupsByPurchases(grouped);
+      console.log(sortedGroups)
       setGroupedData(sortedGroups);
     } catch (err) {
       console.error("Erro ao buscar dados:", err);
@@ -232,13 +233,15 @@ export default function TopCriativosVendasPage() {
               const firstAd = group.ads[0];
               const creative = group.creative;
               const poster = creative.object_story_spec?.video_data?.image_url || group.creative.thumbnail_url;
+              const mediaType = creative.object_story_spec?.video_data?.image_url ? 'VIDEO' : 'IMAGE' 
               const title = firstAd.name || creative.id;
 
               return (
                 <div key={creative.id}>
                   <CardAdComponent
                     title={title}
-                    imageUrl={poster || "/teste.jpg"}
+                    thumbUrl={poster || "/teste.jpg"}
+                    mediaType={mediaType}
                     metrics={[
                       {
                         label: "Tumbstop",
