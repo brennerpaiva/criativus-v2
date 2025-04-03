@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['static.rocketreach.co', 'www.facebook.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.fbcdn.net', // cobre scontent-gru1-1.xx.fbcdn.net, etc.
+      },
+      {
+        protocol: 'https',
+        hostname: 'static.rocketreach.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.facebook.com', // se precisar de qualquer subdomínio do facebook.com
+      },
+    ],
   },
 };
 
