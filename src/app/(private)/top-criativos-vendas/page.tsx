@@ -109,7 +109,6 @@ export default function TopCriativosVendasPage() {
       // 3. Agrupa e ordena
       const grouped = groupAdsByCreative(adsDesorganizados);
       const sortedGroups = sortGroupsByPurchases(grouped);
-      console.log(sortedGroups)
       setGroupedData(sortedGroups);
     } catch (err) {
       console.error("Erro ao buscar dados:", err);
