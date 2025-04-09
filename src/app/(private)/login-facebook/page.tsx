@@ -3,17 +3,25 @@
 import { useAuth } from "@/context/auth.context";
 import AuthService from "@/service/auth.service";
 import { useRouter, useSearchParams } from "next/navigation";
-import nookies from 'nookies';
-import { useEffect, useState } from "react";
+import nookies from "nookies";
+import { Suspense, useEffect, useState } from "react";
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <Content />
+    </Suspense>
+  );
+}
+
+function Content() {
   const authService = new AuthService();
   const { findAdAccounts } = useAuth();
   const [adAccounts, setAdAccounts] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
-  const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter(); // Correção aqui
+  const router = useRouter();
 
   useEffect(() => {
     if (code) {
@@ -27,11 +35,12 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Erro atoken", error);
     }
+
     try {
       const profile = await authService.getProfile();
-      nookies.set(null, 'user', JSON.stringify(profile), { 
+      nookies.set(null, "user", JSON.stringify(profile), {
         maxAge: 60 * 60 * 24 * 365 * 10,
-        path: '/' 
+        path: "/",
       });
       await findAdAccounts();
       router.push("/top-criativos-vendas");
