@@ -50,6 +50,7 @@ export interface Creative {
   
   export interface AdCreativeInsight {
     id: string;
+    ad_id: string;
     name: string;
     creative: Creative;
     insights?: Insights;

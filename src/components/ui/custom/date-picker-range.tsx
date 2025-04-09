@@ -15,8 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 
 // Definimos as props para aceitar o value e um onChange
-interface DatePickerWithRangeProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+interface DatePickerWithRangeProps {
+  className?: string;
   value?: DateRange;
   onChange?: (range: DateRange | undefined) => void;
 }

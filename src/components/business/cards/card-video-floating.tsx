@@ -28,8 +28,6 @@ export function FloatingVideoCard({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        position="bottom"
-        size="content"
         className="w-full sm:w-[400px] ml-auto !p-0 !pb-2 flex flex-col"
       >
         <SheetHeader className="p-4 border-b">
