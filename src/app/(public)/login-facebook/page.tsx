@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/auth.context";
 import AuthService from "@/service/auth.service";
+import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import nookies from "nookies";
 import { Suspense, useEffect, useState } from "react";
@@ -42,29 +43,26 @@ function Content() {
         maxAge: 60 * 60 * 24 * 365 * 10,
         path: "/",
       });
+      setLoading(false);
       await findAdAccounts();
       router.push("/top-criativos-vendas");
-      setLoading(false);
     } catch (error) {
       console.error("Erro ao buscar o profile:", error);
     }
   };
 
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <h1>{loading ? "loading" : "carregou tudo"}</h1>
-      {code ? (
-        <>
-          <p>Token: {code}</p>
-          <button onClick={() => fetchAdAccounts(code)}>
-            Recarregar AdAccounts
-          </button>
-          <pre>{JSON.stringify(adAccounts, null, 2)}</pre>
-        </>
-      ) : (
-        <p>Nenhum token foi fornecido na URL. Faça login primeiro.</p>
-      )}
-    </div>
+    <div className="w-full h-screen lg:grid">
+          <div className="flex h-full items-center justify-center py-12">
+            <div className="mx-auto grid w-full">
+              <div className="grid gap-8 text-center">
+                <h1 className="text-xl font-bold">{loading ? "Estamos conectando sua conta... aguarde." : "Redirecionando"}</h1>
+                <div className="flex">
+                  <Loader2 className="animate-spin mx-auto" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
   );
 }

@@ -107,16 +107,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserToken(token);
       
       const profile = await authService.getProfile();
-      setUser(profile);
       nookies.set(null, 'user', JSON.stringify(profile), { 
         maxAge: 60 * 60 * 24 * 365 * 10,
         path: '/' 
       });
+      setUser(profile);
       
       if (profile.accessTokenFb) {
         await findAdAccounts();
       } else {
         return await loginWithFacebook();
+        
       }
       router.push('/top-criativos-vendas');
    
