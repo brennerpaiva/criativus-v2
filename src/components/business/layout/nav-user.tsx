@@ -1,13 +1,9 @@
 "use client"
 
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
   Moon,
-  Sparkles,
   Sun
 } from "lucide-react"
 
@@ -30,21 +26,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/context/auth.context"
 import { userModel } from "@/types/model/user.model"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
+
 
 export function NavUser(user: userModel) {
   const { isMobile } = useSidebar()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  
+  // Extrai a função de logout do AuthContext
+  const { logout } = useAuth()
+  
   useEffect(() => {
     setMounted(true)
   }, [])
+  
   if (!mounted) {
     return null
   }
-
+  
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -87,41 +90,18 @@ export function NavUser(user: userModel) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles size={16} className="mr-1"/>
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck size={16} className="mr-1"/>
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard size={16} className="mr-1"/>
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell size={16} className="mr-1"/>
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-
-            {/* 3. Item para alternar tema */}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
+              <DropdownMenuItem
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
               {theme === "dark" ? <Sun size={16} className="mr-1"/> : <Moon size={16} className="mr-1"/>}
               {theme === "dark" ? "Light Theme" : "Dark Theme"}
             </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
               <LogOut size={16} className="mr-1"/>
               Log out
             </DropdownMenuItem>
+            </DropdownMenuGroup>
+            
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
