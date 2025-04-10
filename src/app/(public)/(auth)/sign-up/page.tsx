@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { SignUpFormComponent } from '@/components/business/forms/sign-up-form.component';
-import { Button } from '@/components/ui/button';
 
 export default function SignupPage() {
   return (
@@ -24,9 +23,6 @@ export default function SignupPage() {
           </div>
           
           <div className="grid gap-4">
-            <Button variant="outline" className="w-full">
-              Login with Google
-            </Button>
             <SignUpFormComponent/>
           </div>
           <div className="mt-4 text-center text-sm">

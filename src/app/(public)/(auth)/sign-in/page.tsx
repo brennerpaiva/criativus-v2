@@ -26,15 +26,15 @@ export default function SignInPage() {
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl font-bold">SignIn</h1>
+            <h1 className="text-3xl font-bold">Entrar</h1>
             <p className="text-balance text-muted-foreground">
-              Enter your email below to login to your account
+             Faça login com sua conta.
             </p>
           </div>
           <SignInFormComponent />
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{' '}
-            <a href="/signup" className="underline">
+            <a href="/sign-up" className="underline">
               Crie sua conta
             </a>
           </div>

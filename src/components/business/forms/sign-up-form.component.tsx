@@ -45,7 +45,7 @@ export const SignUpFormComponent = () => {
         <Input
           id="name"
           type="string"
-          placeholder="Nome e sobrenome"
+          placeholder="Nome"
           {...register('name')}
           className={errors.name ? 'focus-visible:ring-red-700' : ''}
         />
