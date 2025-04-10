@@ -30,11 +30,19 @@ import { DateRange } from "react-day-picker";
 export default function TopCriativosVendasPage() {
   const router = useRouter();
   const { activeAdAccount } = useAuth();
-  const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(2025, 1, 15),
-    to: new Date(2025, 1, 16),
+
+  // Inicializa a data com os últimos 7 dias
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 7);
+    return {
+      from: sevenDaysAgo,
+      to: today,
+    };
   });
+
+  const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Estados do popover de "Criar Snapshot"
@@ -156,7 +164,7 @@ export default function TopCriativosVendasPage() {
         comment,
         since,
         until,
-      }
+      };
       const response = await SnapshotService.createSnapshot(snapshotBody);
 
       // Fechamos o popover e limpamos o comentário
@@ -179,7 +187,7 @@ export default function TopCriativosVendasPage() {
       <div className="flex my-auto justify-between">
         <div className="flex">
           <img src="fire.gif" alt="" className="w-10" />
-          <h1 className="text-3xl font-bold text-center my-auto">Top Criativos</h1>
+          <h1 className="text-3xl font-bold text-center my-auto">Top Criativos - Vendas</h1>
         </div>
 
         {/* POPUP DE CRIAR SNAPSHOT */}
@@ -200,10 +208,7 @@ export default function TopCriativosVendasPage() {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
-            <Button
-              onClick={handleGenerateSnapshotLink}
-              disabled={isLoading || !comment}
-            >
+            <Button onClick={handleGenerateSnapshotLink} disabled={isLoading || !comment}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Gerar link
             </Button>
@@ -215,6 +220,7 @@ export default function TopCriativosVendasPage() {
         <SelectGeneric
           label="Agrupar por"
           placeholder="Agrupar por"
+          defaultValue="criativo"
           items={[{ value: "criativo", label: "Criativos" }]}
           className="w-[140px]"
         />
@@ -231,8 +237,10 @@ export default function TopCriativosVendasPage() {
             {groupedData.map((group) => {
               const firstAd = group.ads[0];
               const creative = group.creative;
-              const poster = creative.object_story_spec?.video_data?.image_url || group.creative.thumbnail_url;
-              const mediaType = creative.object_story_spec?.video_data?.image_url ? 'VIDEO' : 'IMAGE' 
+              const poster =
+                creative.object_story_spec?.video_data?.image_url ||
+                group.creative.thumbnail_url;
+              const mediaType = creative.object_story_spec?.video_data?.image_url ? "VIDEO" : "IMAGE";
               const title = firstAd.name || creative.id;
 
               return (
@@ -248,7 +256,7 @@ export default function TopCriativosVendasPage() {
                       },
                       {
                         label: "CTR (link click)",
-                        value: `${group.aggregatedInsights.ctrLinkClick.toFixed(2) ?? 0}%` ,
+                        value: `${group.aggregatedInsights.ctrLinkClick.toFixed(2) ?? 0}%`,
                       },
                       {
                         label: "Custo por Compra Site",
@@ -258,18 +266,10 @@ export default function TopCriativosVendasPage() {
                         label: "Compras",
                         value: group.aggregatedInsights.actions.purchase ?? 0,
                       },
-                      // {
-                      //   label: "Gasto Total",
-                      //   value: group.aggregatedInsights.spend.toFixed(2),
-                      // },
                       {
                         label: "Click to purchase",
                         value: `${group.aggregatedInsights.clickToPurchase.toFixed(2) ?? 0}%`,
                       },
-                      // {
-                      //   label: "Custo por LP view",
-                      //   value: `R$${group.aggregatedInsights.costPerLandingPageView.toFixed(2)}`,
-                      // },
                       {
                         label: "Roas",
                         value: `${group.aggregatedInsights.roasCustom.toFixed(2) ?? 0}`,
