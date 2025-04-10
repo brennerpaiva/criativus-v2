@@ -78,7 +78,7 @@
 
   input:-webkit-autofill { 
     -webkit-background-clip: text;
-    -webkit-text-fill-color: #ffffff;
+    -webkit-text-fill-color: hsl(var(--foreground));
   }
 
     /* Barra de rolagem no Chrome, Safari, Edge Chromium, Opera... */
