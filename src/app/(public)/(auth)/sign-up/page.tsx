@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import ImageBanner from '/public/ok.jpg';
+import ImageBanner from '/public/signup.jpg';
 
 import { SignUpFormComponent } from '@/components/business/forms/sign-up-form.component';
 
