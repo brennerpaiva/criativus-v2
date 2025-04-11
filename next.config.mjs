@@ -14,6 +14,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.facebook.com', // se precisar de qualquer subdomínio do facebook.com
       },
+      {
+        protocol: 'https',
+        hostname: '*.pexels.com', // Abrange pexels.com e subdomínios como images.pexels.com
+      },
     ],
   },
 };
