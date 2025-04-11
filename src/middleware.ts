@@ -51,14 +51,11 @@ export function middleware(request: NextRequest) {
       redirectResponse.cookies.delete(cookieName);
     });
     
-    console.log('passou aq');
-    
     return redirectResponse;
   }  
   
   // Se não houver token e a rota for pública, retorna a resposta modificada com os cookies deletados
   if (!authToken && publicRoute) {
-    console.log('passou - sem token, mas rota pública');
     return NextResponse.next();
   }
 
