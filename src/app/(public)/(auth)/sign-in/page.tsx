@@ -3,6 +3,7 @@
 import { SignInFormComponent } from "@/components/business/forms/sign-in-form.component";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import ImageBanner from '/public/teste.jpg';
 
 export default function SignInPage() {
   const [adAccounts, setAdAccounts] = useState([]);
@@ -42,7 +43,7 @@ export default function SignInPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="/teste.jpg"
+          src={ImageBanner}
           alt="Image"
           width="1920"
           height="1080"
