@@ -260,7 +260,7 @@ export default function TopCriativosVendasPage() {
                       },
                       {
                         label: "Custo por Compra Site",
-                        value: `$ ${group.aggregatedInsights.costSitePurchase.toFixed(2) ?? 0}`,
+                        value: `R$ ${group.aggregatedInsights.costSitePurchase.toFixed(2) ?? 0}`,
                       },
                       {
                         label: "Compras",
