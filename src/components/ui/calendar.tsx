@@ -40,7 +40,7 @@ export function Calendar({
         day_outside: "text-muted-foreground opacity-50",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
-          "aria-selected:bg-accent/50 aria-selected:text-accent-foreground",
+          "aria-selected:bg-primary/30 aria-selected:text-primary-foreground",
         day_hidden: "invisible",
         ...classNames
       }}

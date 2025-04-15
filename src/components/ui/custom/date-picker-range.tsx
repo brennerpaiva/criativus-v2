@@ -1,6 +1,7 @@
 "use client";
 
 import { addDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale"; // <- Import da localidade PT-BR
 import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
 import { DateRange } from "react-day-picker";
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-// Definimos as props para aceitar o value e um onChange
 interface DatePickerWithRangeProps {
   className?: string;
   value?: DateRange;
@@ -49,30 +49,25 @@ export function DatePickerWithRange({
     }
   }, [value]);
 
-  // Helper para formatar o label do botão
   const getButtonLabel = () => {
     if (!selectedRange?.from) {
-      return "Pick a date";
+      return "Selecionar data";
     } else if (selectedRange.from && !selectedRange.to) {
-      return format(selectedRange.from, "LLL dd, y");
+      return format(selectedRange.from, "dd MMM, yyyy", { locale: ptBR });
     } else {
-      return `${format(selectedRange.from, "LLL dd, y")} - ${format(
-        selectedRange.to!,
-        "LLL dd, y"
-      )}`;
+      return `${format(selectedRange.from, "dd MMM, yyyy", { locale: ptBR })} - 
+              ${format(selectedRange.to!, "dd MMM, yyyy", { locale: ptBR })}`;
     }
   };
 
-  // Ação do botão "Apply": confirmamos o tempRange
   const handleApply = () => {
     setSelectedRange(tempRange);
     setOpen(false);
-    onChange?.(tempRange); // Notifica o "pai" caso queira reagir
+    onChange?.(tempRange);
   };
 
-  // Ação do botão "Cancel": descartamos o tempRange
   const handleCancel = () => {
-    setTempRange(selectedRange); // Reverte para o original
+    setTempRange(selectedRange);
     setOpen(false);
   };
 
@@ -98,19 +93,17 @@ export function DatePickerWithRange({
             <Calendar
               initialFocus
               mode="range"
-              // No defaultMonth, você pode indicar para qual mês abrir
+              locale={ptBR}
               defaultMonth={tempRange?.from}
               selected={tempRange}
               onSelect={setTempRange}
               numberOfMonths={2}
             />
-
-            {/* Footer com os botões */}
             <div className="mt-4 flex justify-end space-x-2">
-              <Button size={"sm"} variant="secondary" onClick={handleCancel}>
+              <Button size={"sm"} variant="outline" onClick={handleCancel}>
                 Cancelar
               </Button>
-              <Button size={"sm"} variant="secondary" onClick={handleApply}>
+              <Button size={"sm"} variant="default" onClick={handleApply}>
                 Aplicar
               </Button>
             </div>
