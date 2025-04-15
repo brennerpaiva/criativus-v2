@@ -35,7 +35,7 @@ export default function TopCriativosVendasPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const today = new Date();
     const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 7);
+    sevenDaysAgo.setDate(today.getDate() - 6);
     return {
       from: sevenDaysAgo,
       to: today,
