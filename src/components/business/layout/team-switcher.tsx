@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { useAuth } from "@/context/auth.context"
+import { Avatar, AvatarFallback } from "@radix-ui/react-avatar"
 
 export function TeamSwitcher() {
   const { isMobile } = useSidebar()
@@ -51,7 +52,11 @@ export function TeamSwitcher() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {/* Ícone ou logo da conta */}
+                <Avatar className=" aspect-square w-8 flex items-center justify-center rounded-lg bg-primary text-sidebar-primary-foreground m-auto">
+                  <AvatarFallback className="rounded-lg">
+                    {activeAdAccount?.name.charAt(0)?.toUpperCase() || ''}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
