@@ -3,6 +3,7 @@ import { userModel } from "./types/model/user.model";
 
 // Define as rotas públicas (não incluímos "/" pois não desejamos ter página home)
 const publicRoutes = [
+  { path: '/', whenAuthenticated: 'redirect' },
   { path: '/sign-in', whenAuthenticated: 'redirect' },
   { path: '/sign-up', whenAuthenticated: 'redirect' },
   { path: '/login-facebook', whenAuthenticated: 'next' }, //TODO: VER SE É POSSÍVEL DEIXAR COMO REDIRECT
