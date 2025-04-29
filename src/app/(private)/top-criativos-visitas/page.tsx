@@ -254,26 +254,34 @@ export default function TopCriativosVisitasPage() {
                       {
                         label: 'CPM',
                         value: formatCurrency(group.aggregatedInsights.cpm),
+                        difference: formatPercent(group.aggregatedInsights.diff.cpm), 
+                        invert: true,
                       },
                       {
                         label: 'CTR (link click)',
                         value: formatPercent(group.aggregatedInsights.ctrLinkClick),
+                        difference: formatPercent(group.aggregatedInsights.diff.ctrLinkClick),
                       },
                       {
                         label: 'CPC (custo por cliques)',
                         value: formatCurrency(group.aggregatedInsights.cpcLinkClick),
+                        difference: formatPercent(group.aggregatedInsights.diff.cpcLinkClick),
+                        invert: true,
                       },
                       {
                         label: 'Taxa de chegada ao site',
                         value: formatPercent(group.aggregatedInsights.siteArrivalRate),
+                        difference: formatPercent(group.aggregatedInsights.diff.siteArrivalRate),
                       },
                       {
                         label: 'Landing Page Views',
                         value: formatNumber(group.aggregatedInsights.landingPageViews),
+                        difference: formatPercent(group.aggregatedInsights.diff.landingPageViews),
                       },
                       {
                         label: 'Cost per Landing Page View',
                         value: formatCurrency(group.aggregatedInsights.costPerLandingPageView),
+                        difference: formatPercent(group.aggregatedInsights.diff.costPerLandingPageView),
                       },
                     ]}
                     onCardClick={() => {
