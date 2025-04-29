@@ -21,6 +21,7 @@ import {
   groupAdsByCreative,
   sortGroupsByPurchases,
 } from "@/utils/creative.util";
+import { formatCurrency, formatNumber, formatPercent } from "@/utils/number-format";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -185,8 +186,8 @@ export default function TopCriativosVendasPage() {
   return (
     <div className="w-full h-full max-w-screen-xl mx-auto flex flex-col justify-around gap-6 mt-6 mb-6">
       <div className="flex my-auto justify-between">
-        <div className="flex">
-          <img src="fire.gif" alt="" className="w-10" />
+        <div className="flex gap-2">
+          <img src="fire.gif" alt="fire" className="w-10" />
           <h1 className="text-3xl font-bold text-center my-auto">Top Criativos - Vendas</h1>
         </div>
 
@@ -251,28 +252,31 @@ export default function TopCriativosVendasPage() {
                     mediaType={mediaType}
                     metrics={[
                       {
-                        label: "Tumbstop",
-                        value: `${group.aggregatedInsights.tumbstock.toFixed(2)}%`,
+                        label: 'Tumbstop',
+                        value: formatPercent(group.aggregatedInsights.tumbstock),
                       },
                       {
-                        label: "CTR (link click)",
-                        value: `${group.aggregatedInsights.ctrLinkClick.toFixed(2) ?? 0}%`,
+                        label: 'CTR (link click)',
+                        value: formatPercent(group.aggregatedInsights.ctrLinkClick),
                       },
                       {
-                        label: "Custo por Compra Site",
-                        value: `R$ ${group.aggregatedInsights.costSitePurchase.toFixed(2) ?? 0}`,
+                        label: 'Custo por Compra Site',
+                        value: formatCurrency(group.aggregatedInsights.costSitePurchase),
                       },
                       {
-                        label: "Compras",
-                        value: group.aggregatedInsights.actions.purchase ?? 0,
+                        label: 'Compras',
+                        value: formatNumber(group.aggregatedInsights.actions.purchase),
                       },
                       {
-                        label: "Click to purchase",
-                        value: `${group.aggregatedInsights.clickToPurchase.toFixed(2) ?? 0}%`,
+                        label: 'Click to purchase',
+                        value: formatPercent(group.aggregatedInsights.clickToPurchase),
                       },
                       {
-                        label: "Roas",
-                        value: `${group.aggregatedInsights.roasCustom.toFixed(2) ?? 0}`,
+                        label: 'ROAS',
+                        value: formatNumber(group.aggregatedInsights.roasCustom, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }),
                       },
                     ]}
                     onCardClick={() => {
