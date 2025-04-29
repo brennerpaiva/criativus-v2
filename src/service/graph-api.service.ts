@@ -32,7 +32,6 @@ const FacebookAdsService = {
         access_token: tokenFb,
       },
     });
-    console.log(response);
     return response.data.data;
   },
 

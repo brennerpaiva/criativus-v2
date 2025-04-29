@@ -53,11 +53,14 @@ export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardCli
               const isInverted = metric.invert === true;
               const isPositive = isInverted ? diffNum <= 0 : diffNum >= 0;
               const opacity = Math.min(Math.abs(diffNum) / 100, 1);
-              const bgColor = isPositive
+              let bgColor = isPositive
                 ? isInverted
                   ? `rgba(34,197,94,${opacity})`  // green when below average for inverted metrics
                   : `rgba(34,197,94,${opacity})`  // green for positive
                 : `rgba(107,114,128, 5%)`;   // grey
+              if (!metric.difference) {
+                bgColor = `rgba(107,114,128, 5%)`
+              }
               const textColor = isPositive ? 'text-green-700' : 'text-red-700';
 
               return (
@@ -72,15 +75,19 @@ export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardCli
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span
-                        className="px-2 py-1 rounded text-card-foreground"
+                        className="px-1 py-1 rounded text-card-foreground"
                         style={{ backgroundColor: bgColor }}
                       >
                         {metric.value}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      Diferença da média <span className={textColor}>{diffNum >= 0 ? `+${metric.difference }` :`${metric.difference }` }</span>
-                    </TooltipContent>
+                    {metric.difference && (
+                      <TooltipContent>
+                        Diferença da média <span className={textColor}>
+                          {diffNum >= 0 ? `+${metric.difference}` : `${metric.difference}`}
+                        </span>
+                      </TooltipContent>
+                    )}
                   </Tooltip>
                 </CardDescription>
               );

@@ -255,22 +255,28 @@ export default function TopCriativosVendasPage() {
                       {
                         label: 'Tumbstop',
                         value: formatPercent(group.aggregatedInsights.tumbstock),
+                        difference: formatPercent(group.aggregatedInsights.diff.tumbstock), 
                       },
                       {
                         label: 'CTR (link click)',
                         value: formatPercent(group.aggregatedInsights.ctrLinkClick),
+                        difference: formatPercent(group.aggregatedInsights.diff.ctrLinkClick), 
                       },
                       {
                         label: 'Custo por Compra Site',
                         value: formatCurrency(group.aggregatedInsights.costSitePurchase),
+                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.costSitePurchase) : undefined, 
+                        invert: true,
                       },
                       {
                         label: 'Compras',
                         value: formatNumber(group.aggregatedInsights.actions.purchase),
+                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.purchase) : undefined, 
                       },
                       {
                         label: 'Click to purchase',
                         value: formatPercent(group.aggregatedInsights.clickToPurchase),
+                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.clickToPurchase) : undefined, 
                       },
                       {
                         label: 'ROAS',
@@ -278,6 +284,7 @@ export default function TopCriativosVendasPage() {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }),
+                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.roasCustom) : undefined, 
                       },
                     ]}
                     onCardClick={() => {
