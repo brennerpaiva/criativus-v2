@@ -25,6 +25,7 @@ function getPageTitle(pathname: string): string {
   // por exemplo:
   const routeMap: Record<string, string> = {
     "/top-criativos-vendas": "Top Criativos - Vendas",
+    "/top-criativos-visitas": "Top Criativos - Visitas",
     "/snapshots": "Snapshots",
     "/settings": "Configurações",
   };

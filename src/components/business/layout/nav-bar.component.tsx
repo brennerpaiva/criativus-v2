@@ -57,7 +57,7 @@ const data = {
         },
         {
           title: "Visitas",
-          url: "/dashboard",
+          url: "/top-criativos-visitas",
         },
         {
           title: "Settings",

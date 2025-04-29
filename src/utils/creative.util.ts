@@ -3,7 +3,7 @@
 import { AdCreativeInsight } from "@/types/model/creative-insights.model";
 
 export interface CreativeGroup {
-  creative: { 
+  creative: {
     id: string;
     name?: string;
     thumbnail_url?: string;
@@ -28,25 +28,35 @@ export interface CreativeGroup {
     spend: number;
     impressions: number;
     clicks: number;
-    ctr: number;
-    purchaseRoas: number;            // Média do ROAS do grupo (do FB)
-    roasCustom: number;              // Novo: média ponderada de purchase_roas
+    ctr: number;               
+    purchaseRoas: number;      
+    roasCustom: number;        
     actions: Record<string, number>;
-    tumbstock: number;               // (video_view / impressions) * 100
-    clickToPurchase: number;         // (purchase / link_click) * 100
-    costPerLandingPageView: number;  // custo por visualização da landing page
-    ctrLinkClick: number;            // (link_click / impressions) * 100
-    costSitePurchase: number;        // spend / "purchase"
-    
-    _roasCount?: number;             // Campo temporário para calcular média de roas do FB
-    _purchaseValueSum?: number;      // Soma parcial de "receita" (purchase_roas * spend)
+    tumbstock: number;         
+    clickToPurchase: number;   
+    costPerLandingPageView: number;  
+    ctrLinkClick: number;      
+    costSitePurchase: number;  
+
+    // Novos campos
+    cpm: number;               
+    cpcLinkClick: number;      
+    landingPageViews: number;  
+    siteArrivalRate: number;   // landing_page_view / link_click * 100
+
+    // Campos internos para cálculo
+    _roasCount?: number;
+    _purchaseValueSum?: number;
   };
 }
 
-export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, CreativeGroup> {
+export function groupAdsByCreative(
+  ads: AdCreativeInsight[]
+): Record<string, CreativeGroup> {
   const grouped = ads.reduce((acc, ad) => {
     // Se o anúncio tiver video_data, agrupa pelo ID do vídeo; senão, agrupa pelo ID do creative
-    const groupKey = ad.creative.object_story_spec?.video_data?.video_id || ad.creative.id;
+    const groupKey =
+      ad.creative.object_story_spec?.video_data?.video_id || ad.creative.id;
 
     // Cria o grupo se não existir
     if (!acc[groupKey]) {
@@ -67,7 +77,11 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
           ctrLinkClick: 0,
           costSitePurchase: 0,
 
-          // Campos internos para cálculo
+          cpm: 0,
+          cpcLinkClick: 0,
+          landingPageViews: 0,
+          siteArrivalRate: 0,
+
           _roasCount: 0,
           _purchaseValueSum: 0,
         },
@@ -82,16 +96,19 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
     // Adiciona o anúncio ao grupo
     acc[groupKey].ads.push(ad);
 
-    // Agrega os dados do insight desse anúncio, se houver
+    // Agrega dados do insight desse anúncio, se houver
     const insight = ad.insights?.data?.[0];
     if (insight) {
       const groupInsights = acc[groupKey].aggregatedInsights;
 
-      // soma spends/impressões/cliques
+      // Soma spends, impressões e cliques
       const spend = parseFloat(insight.spend);
+      const impressions = parseInt(insight.impressions, 10);
+      const clicks = parseInt(insight.clicks, 10);
+
       groupInsights.spend += spend;
-      groupInsights.impressions += parseInt(insight.impressions, 10);
-      groupInsights.clicks += parseInt(insight.clicks, 10);
+      groupInsights.impressions += impressions;
+      groupInsights.clicks += clicks;
 
       // Soma a métrica de purchase_roas do FB
       if (insight.purchase_roas && insight.purchase_roas[0]) {
@@ -99,7 +116,7 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
         groupInsights.purchaseRoas += roasFB;
         groupInsights._roasCount! += 1;
 
-        // Também multiplica roasFB * spend para somar à receita total do grupo
+        // Também multiplica roasFB * spend para somar à "receita" total do grupo
         groupInsights._purchaseValueSum! += roasFB * spend;
       }
 
@@ -108,7 +125,8 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
         insight.actions.forEach((action) => {
           const actionType = action.action_type;
           const value = parseFloat(action.value) || 0;
-          groupInsights.actions[actionType] = (groupInsights.actions[actionType] || 0) + value;
+          groupInsights.actions[actionType] =
+            (groupInsights.actions[actionType] || 0) + value;
         });
       }
     }
@@ -121,26 +139,50 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
     const insights = group.aggregatedInsights;
     const { actions } = insights;
 
-    // CTR = (clicks / impressions) * 100
+    // CTR geral (se útil)
     if (insights.impressions > 0) {
       insights.ctr = (insights.clicks / insights.impressions) * 100;
     }
 
-    // ctrLinkClick = (link_click / impressions) * 100
+    // link_click para outras métricas
     const linkClicks = actions["link_click"] || 0;
+
+    // CTR (link click) = (link_click / impressions) * 100
     if (insights.impressions > 0) {
       insights.ctrLinkClick = (linkClicks / insights.impressions) * 100;
     }
 
-    // tumbstock = (video_view / impressions) * 100
+    // CPC (link click) = spend / link_click
+    insights.cpcLinkClick = linkClicks > 0 ? insights.spend / linkClicks : 0;
+
+    // CPM = (spend / impressions) * 1000
+    insights.cpm =
+      insights.impressions > 0
+        ? (insights.spend / insights.impressions) * 1000
+        : 0;
+
+    // Tumbstock = (video_view / impressions) * 100
     const videoViews = actions["video_view"] || 0;
     if (insights.impressions > 0) {
       insights.tumbstock = (videoViews / insights.impressions) * 100;
     }
 
+    // Landing Page Views
+    const landingPageViews = actions["landing_page_view"] || 0;
+    insights.landingPageViews = landingPageViews;
+
+    // Cost per Landing Page View = spend / landing_page_view
+    insights.costPerLandingPageView =
+      landingPageViews > 0 ? insights.spend / landingPageViews : 0;
+
+    // Taxa de chegada ao Site = (landing_page_view / link_click) * 100
+    insights.siteArrivalRate =
+      linkClicks > 0 ? (landingPageViews / linkClicks) * 100 : 0;
+
     // clickToPurchase = (purchase / link_click) * 100
-    const purchaseCount = actions["purchase"] || 0; 
-    insights.clickToPurchase = linkClicks > 0 ? (purchaseCount / linkClicks) * 100 : 0;
+    const purchaseCount = actions["purchase"] || 0;
+    insights.clickToPurchase =
+      linkClicks > 0 ? (purchaseCount / linkClicks) * 100 : 0;
 
     // Se tiver ROAS do FB, faz a média
     if (insights._roasCount && insights._roasCount > 0) {
@@ -150,22 +192,15 @@ export function groupAdsByCreative(ads: AdCreativeInsight[]): Record<string, Cre
     }
 
     // roasCustom = (soma da receita) / (spend total)
-    // onde "receita" de cada anúncio = roasDoFB * spend
     if (insights.spend > 0) {
       insights.roasCustom = insights._purchaseValueSum! / insights.spend;
     } else {
       insights.roasCustom = 0;
     }
 
-    // costPerLandingPageView = spend / landing_page_view
-    const landingPageViews = actions["landing_page_view"] || 0;
-    insights.costPerLandingPageView =
-      landingPageViews > 0 ? insights.spend / landingPageViews : 0;
-
     // costSitePurchase = spend / purchase
-    insights.costSitePurchase = purchaseCount > 0
-      ? insights.spend / purchaseCount
-      : 0;
+    insights.costSitePurchase =
+      purchaseCount > 0 ? insights.spend / purchaseCount : 0;
 
     // Remove campos temporários
     delete insights._roasCount;
@@ -181,6 +216,7 @@ export function sortGroupsByPurchases(
   return Object.values(grouped).sort((a, b) => {
     const purchaseA = a.aggregatedInsights.actions.purchase ?? 0;
     const purchaseB = b.aggregatedInsights.actions.purchase ?? 0;
-    return purchaseB - purchaseA; // maior para menor
+    // Maior para menor
+    return purchaseB - purchaseA;
   });
 }
