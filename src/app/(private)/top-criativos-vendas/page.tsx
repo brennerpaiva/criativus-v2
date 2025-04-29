@@ -240,7 +240,8 @@ export default function TopCriativosVendasPage() {
               const creative = group.creative;
               const poster =
                 creative.object_story_spec?.video_data?.image_url ||
-                group.creative.thumbnail_url;
+                creative.image_url ||
+                creative.thumbnail_url;
               const mediaType = creative.object_story_spec?.video_data?.image_url ? "VIDEO" : "IMAGE";
               const title = firstAd.name || creative.id;
 

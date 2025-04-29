@@ -1,6 +1,8 @@
 export interface Creative {
     id: string;
     name?: string;
+    image_url?: string;
+    thumbnail_url?: string;
     object_story_spec?: {
       instagram_user_id: string;
       page_id: string;

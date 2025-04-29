@@ -7,6 +7,7 @@ export interface CreativeGroup {
     id: string;
     name?: string;
     thumbnail_url?: string;
+    image_url?: string;
     object_story_spec?: {
       instagram_user_id: string;
       page_id: string;
@@ -56,7 +57,7 @@ export function groupAdsByCreative(
   const grouped = ads.reduce((acc, ad) => {
     // Se o anúncio tiver video_data, agrupa pelo ID do vídeo; senão, agrupa pelo ID do creative
     const groupKey =
-      ad.creative.object_story_spec?.video_data?.video_id || ad.creative.id;
+      ad.creative.object_story_spec?.video_data?.video_id || ad.creative?.image_url || ad.name || ad.creative.id;
 
     // Cria o grupo se não existir
     if (!acc[groupKey]) {
