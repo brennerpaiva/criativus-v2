@@ -100,7 +100,7 @@ export function formatCurrency(
  *
  * @example
  * formatPercent(17.361)        // "17,36 %"
- * formatPercent("5")           // "5,00 %"
+ * formatPercent("5")           // "5 %"
  * formatPercent(null)          // "—"
  */
 export function formatPercent(
@@ -110,9 +110,20 @@ export function formatPercent(
   const num = toNumber(value);
   if (num === null) return FALLBACK;
 
-  return safelyFormat(num / 100, {
+  // Formata inicialmente com as casas decimais desejadas
+  const formatted = safelyFormat(num / 100, {
     style: 'percent',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
+
+  if (decimals > 0) {
+    // Remove “,00” (ou “.00”) quando for tudo zero antes do “%”
+    // Exemplo: “76,00%” → “76%”
+    console.log(formatted.replace(/([0-9])([.,]0+)(%?)$/, '$1$3'))
+    return formatted.replace(/([0-9])([.,]0+)(%?)$/, '$1$3');
+   
+  }
+  return formatted;
 }
+
