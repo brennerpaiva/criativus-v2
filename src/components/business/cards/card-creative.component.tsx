@@ -22,7 +22,7 @@ interface CardAdProps {
 export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardClick }: CardAdProps) {
   return (
     <TooltipProvider>
-      <Card className={cn("w-full h-fit")} onClick={onCardClick}>
+      <Card className={cn("w-full h-fit")}>
         <CardHeader className="p-0 cursor-pointer">
           {/* Container com position:relative para comportar a tag "video" */}
           <div className="relative w-full h-[240px] overflow-hidden">
@@ -32,6 +32,7 @@ export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardCli
               height={241}
               alt={title}
               className="w-full h-full object-cover"
+              onClick={onCardClick}
             />
             {/* Tag "video" no topo esquerdo (ou mude para "top-2 right-2" se quiser no canto direito) */}
             <span className="absolute top-2 left-2 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded">
