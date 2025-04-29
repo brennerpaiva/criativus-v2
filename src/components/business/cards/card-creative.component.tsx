@@ -15,7 +15,7 @@ interface CardAdProps {
   title: string;
   thumbUrl: string;
   mediaType?: string;
-  metrics: { label: string; value: string | number; difference?: string | number }[];
+  metrics: { label: string; value: string | number; difference?: string; invert?: boolean }[];
   onCardClick?: () => void;
 }
 
@@ -24,7 +24,6 @@ export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardCli
     <TooltipProvider>
       <Card className={cn("w-full h-fit")}>
         <CardHeader className="p-0 cursor-pointer">
-          {/* Container com position:relative para comportar a tag "video" */}
           <div className="relative w-full h-[240px] overflow-hidden">
             <Image
               src={thumbUrl}
@@ -34,41 +33,64 @@ export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardCli
               className="w-full h-full object-cover"
               onClick={onCardClick}
             />
-            {/* Tag "video" no topo esquerdo (ou mude para "top-2 right-2" se quiser no canto direito) */}
             <span className="absolute top-2 left-2 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded">
-              {mediaType === "VIDEO" ? (
-                <VideoIcon className="w-5 h-5" />
-              ) : (
-                <ImageIcon className="w-5 h-5" />
-              )}
+              {mediaType === "VIDEO" ? <VideoIcon className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
             </span>
           </div>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3 p-4 overflow-hidden">
-          <div className="flex">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <CardTitle className="text-sm truncate">{title}</CardTitle>
-              </TooltipTrigger>
-              <TooltipContent>{title}</TooltipContent>
-            </Tooltip>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CardTitle className="text-sm truncate">{title}</CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>{title}</TooltipContent>
+          </Tooltip>
+
           <div className="flex flex-col gap-3">
-            {metrics.map((metric, index) => (
-              <CardDescription key={index} className="flex justify-between">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>{metric.label}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>{metric.label}</TooltipContent>
-                </Tooltip>
-                <span>{metric.value}</span>
-              </CardDescription>
-            ))}
+            {metrics.map((metric, idx) => {
+              const diffNum = metric.difference ? parseFloat(metric.difference) : 0;
+              const isInverted = metric.invert === true;
+              const isPositive = isInverted ? diffNum <= 0 : diffNum >= 0;
+              const opacity = Math.min(Math.abs(diffNum) / 100, 1);
+              const bgColor = isPositive
+                ? isInverted
+                  ? `rgba(34,197,94,${opacity})`  // green when below average for inverted metrics
+                  : `rgba(34,197,94,${opacity})`  // green for positive
+                : `rgba(107,114,128, 5%)`;   // grey
+              const textColor = isPositive ? 'text-green-700' : 'text-red-700';
+
+              return (
+                <CardDescription key={idx} className="flex justify-between">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>{metric.label}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>{metric.label}</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className="px-2 py-1 rounded text-card-foreground"
+                        style={{ backgroundColor: bgColor }}
+                      >
+                        {metric.value}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Diferença da média <span className={textColor}>{diffNum >= 0 ? `+${metric.difference }` :`${metric.difference }` }</span>
+                    </TooltipContent>
+                  </Tooltip>
+                </CardDescription>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
     </TooltipProvider>
   );
 }
+
+// src/pages/top-criativos-vendas.tsx remains unchanged
+
