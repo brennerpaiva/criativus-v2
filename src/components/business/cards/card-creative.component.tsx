@@ -49,7 +49,7 @@ export function CardAdComponent({ title, thumbUrl, mediaType, metrics, onCardCli
 
           <div className="flex flex-col gap-3">
             {metrics.map((metric, idx) => {
-              const diffNum = metric.difference ? parseFloat(metric.difference) : 0;
+              const diffNum = metric.difference ? parseFloat(metric.difference.replace(/\./g, '')) : 0;
               const isInverted = metric.invert === true;
               const isPositive = isInverted ? diffNum <= 0 : diffNum >= 0;
               const opacity = Math.min(Math.abs(diffNum) / 100, 1);
