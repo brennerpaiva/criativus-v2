@@ -37,7 +37,6 @@ export default function SnapshotPage() {
       try {
         const snapshot = await SnapshotService.findSnapshot(slug as string);
         setSnapshotData(snapshot);
-        console.log(snapshot);
         const groupedsCreatives = JSON.parse(snapshot.data);
         setGroupedData(groupedsCreatives);
       } catch (err) {

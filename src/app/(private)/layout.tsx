@@ -64,8 +64,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   async function fetchData() {
     try {
-      console.log("Buscando insights para a conta:", activeAdAccount);
-
       if (activeAdAccount) {
         // const insights = await FacebookAdsService.getCreativeInsights(adAccount.id);
         // console.log("Insights obtidos:", insights);

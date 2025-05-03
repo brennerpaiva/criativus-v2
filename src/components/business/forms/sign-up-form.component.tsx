@@ -25,7 +25,6 @@ export const SignUpFormComponent = () => {
   });
   const RegisterUser = async (data: SignUpUserFormData) => {
     setOutput(JSON.stringify(data, null, 2));
-    console.log(data);
     try {
       await authService.signUp(data);
       router.push('/login');
