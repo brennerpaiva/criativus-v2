@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronsUpDown, Loader2, Plus } from "lucide-react"
+import { ChevronsUpDown, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import {
@@ -8,7 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 
@@ -59,7 +58,7 @@ export function TeamSwitcher() {
                 </Avatar>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
+                <span className="flex truncate font-semibold">
                   {activeAdAccount?.name || "Selecione uma conta"}
                 </span>
               </div>
@@ -126,25 +125,33 @@ export function TeamSwitcher() {
                     switchAdAccount(account)
                     // Se quiser fechar o dropdown após selecionar, não chame preventDefault.
                   }}
-                  className="gap-2 p-2"
+                  className="gap-2 p-2 truncate overflow-hidden"
+                  title={account.name}
                 >
-                  <div className="flex w-6 items-center justify-center rounded-sm border">
-                    {/* Ícone ou logo da conta */}
-                  </div>
-                  {account.name}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                  {/* <div className="flex w-6 items-center justify-center rounded-sm border  bg-primary">
+                   
+                  </div> */}
+                  <Avatar className="aspect-square w-6 h-6 flex items-center justify-center rounded-sm bg-primary text-sidebar-primary-foreground">
+                    <AvatarFallback className="rounded-lg">
+                      {account?.name.charAt(0)?.toUpperCase() || ''}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="truncate">
+                    {account.name}
+                  </p>
+                  {/* <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut> */}
                 </DropdownMenuItem>
               ))
             )}
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="gap-2 p-2">
+            {/* <DropdownMenuItem className="gap-2 p-2">
               <div className="flex w-6 items-center justify-center rounded-md border bg-background">
                 <Plus className="h-4 w-4" />
               </div>
               <div className="font-medium text-muted-foreground">Add team</div>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
