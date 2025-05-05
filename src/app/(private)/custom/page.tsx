@@ -43,6 +43,7 @@ const METRIC_MAP = {
   },
   ctrLinkClick: {
     label: "CTR (link click)",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.ctrLinkClick),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.ctrLinkClick),
   },
@@ -60,6 +61,7 @@ const METRIC_MAP = {
   },
   clickToPurchase: {
     label: "Click to Purchase",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.clickToPurchase),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.clickToPurchase),
   },
@@ -71,11 +73,13 @@ const METRIC_MAP = {
   },
   purchase: {
     label: "Compras",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.actions.purchase || 0),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.purchase),
   },
   roasCustom: {
     label: "ROAS",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) =>
       formatNumber(i.roasCustom, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.roasCustom),
@@ -88,16 +92,19 @@ const METRIC_MAP = {
   },
   impressions: {
     label: "Impressões",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.impressions),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.impressions),
   },
   clicks: {
     label: "Cliques",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.clicks),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.clicks),
   },
   ctr: {
     label: "CTR",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.ctr),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.ctr),
   },
@@ -109,16 +116,19 @@ const METRIC_MAP = {
   },
   siteArrivalRate: {
     label: "Taxa de chegada ao site",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.siteArrivalRate),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.siteArrivalRate),
   },
   landingPageViews: {
     label: "Landing Page Views",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.landingPageViews),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.landingPageViews),
   },
   purchaseRoas: {
     label: "Purchase ROAS",
+    invert: false,
     value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.purchaseRoas, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.purchaseRoas),
   },
