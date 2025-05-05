@@ -27,7 +27,7 @@ function getPageTitle(pathname: string): string {
     "/top-criativos-vendas": "Top Criativos - Vendas",
     "/top-criativos-visitas": "Top Criativos - Visitas",
     "/snapshots": "Snapshots",
-    "/settings": "Configurações",
+    "/custom": "Custom Page",
   };
 
   // Se existir na tabela, retorna o valor

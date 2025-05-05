@@ -60,8 +60,8 @@ const data = {
           url: "/top-criativos-visitas",
         },
         {
-          title: "Settings",
-          url: "#",
+          title: "Custom",
+          url: "/custom",
         },
       ],
     },
