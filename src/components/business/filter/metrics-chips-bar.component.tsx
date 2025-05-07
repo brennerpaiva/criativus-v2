@@ -1,27 +1,47 @@
+/* -------------------------------------------------
+ * MetricChipsBar.tsx
+ * -------------------------------------------------
+ * Barra de chips ordenáveis com DnD-Kit.
+ * Mantém apenas IDs no state; rótulo/invert
+ * vêm de METRIC_MAP / METRIC_OPTIONS.
+ * ------------------------------------------------*/
+
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Command, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-    closestCenter,
-    DndContext,
-    DragEndEvent,
-    MouseSensor,
-    PointerSensor,
-    TouchSensor,
-    useSensor,
-    useSensors,
+  Command,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  MouseSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 import {
-    arrayMove,
-    horizontalListSortingStrategy,
-    SortableContext,
-    useSortable,
+  arrayMove,
+  horizontalListSortingStrategy,
+  SortableContext,
+  useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, X } from "lucide-react";
 import React, { useState } from "react";
 
-/* ================= tipos ================= */
+/* ================= tipos e opções ================= */
+
 export type MetricKey =
   | "spend"
   | "impressions"
@@ -37,7 +57,8 @@ export type MetricKey =
   | "costSitePurchase"
   | "purchaseRoas"
   | "roasCustom"
-  | "landingPageViews";
+  | "landingPageViews"
+  | "purchase";
 
 interface MetricOption {
   key: MetricKey;
@@ -46,95 +67,111 @@ interface MetricOption {
 }
 
 export const METRIC_OPTIONS: MetricOption[] = [
-    { key: "spend", label: "Gasto (Spend)", invert: true },
-    { key: "impressions", label: "Impressões" },
-    { key: "clicks", label: "Cliques" },
-    { key: "ctr", label: "CTR" },
-    { key: "ctrLinkClick", label: "CTR (link click)" },
-    { key: "cpm", label: "CPM", invert: true },
-    { key: "cpcLinkClick", label: "CPC", invert: true },
-    { key: "costPerLandingPageView", label: "Custo por LPV", invert: true },
-    { key: "siteArrivalRate", label: "Taxa de Chegada" },
-    { key: "tumbstock", label: "Thumb‑stop" },
-    { key: "clickToPurchase", label: "Click to Purchase" },
-    { key: "costSitePurchase", label: "Custo por Compra", invert: true },
-    { key: "purchaseRoas", label: "Purchase ROAS" },
-    { key: "roasCustom", label: "ROAS Custom" },
-    { key: "landingPageViews", label: "Landing Page Views" },
-]
+  { key: "spend", label: "Gasto (Spend)", invert: true },
+  { key: "impressions", label: "Impressões" },
+  { key: "clicks", label: "Cliques" },
+  { key: "ctr", label: "CTR" },
+  { key: "ctrLinkClick", label: "CTR (link click)" },
+  { key: "cpm", label: "CPM", invert: true },
+  { key: "cpcLinkClick", label: "CPC", invert: true },
+  { key: "costPerLandingPageView", label: "Custo por LPV", invert: true },
+  { key: "siteArrivalRate", label: "Taxa de Chegada" },
+  { key: "tumbstock", label: "Thumb-stop" },
+  { key: "clickToPurchase", label: "Click to Purchase" },
+  { key: "costSitePurchase", label: "Custo por Compra", invert: true },
+  { key: "purchaseRoas", label: "Purchase ROAS" },
+  { key: "roasCustom", label: "ROAS Custom" },
+  { key: "landingPageViews", label: "Landing Page Views" },
+];
 
-export interface MetricChip {
-  id: MetricKey;
-  label: string;
-  invert?: boolean;
-}
+/* lookup rápido */
+const LABEL_LOOKUP = Object.fromEntries(
+  METRIC_OPTIONS.map((o) => [o.key, o.label]),
+) as Record<MetricKey, string>;
+
+/* ================= props ================= */
 
 interface MetricChipsBarProps {
-  value: MetricChip[];
-  onChange: (chips: MetricChip[]) => void;
-  /** Máx. chips permitidos (default 6) */
-  maxItems?: number;
-  /** Mín. chips (default 1) */
-  minItems?: number;
+  value: MetricKey[];
+  onChange: (ids: MetricKey[]) => void;
+  maxItems?: number; // default 6
+  minItems?: number; // default 1
 }
 
 /* ================= componente principal =============== */
-export function MetricChipsBar({ value, onChange, maxItems = 6, minItems = 1 }: MetricChipsBarProps) {
-  /* sensores */
+
+export function MetricChipsBar({
+  value,
+  onChange,
+  maxItems = 6,
+  minItems = 1,
+}: MetricChipsBarProps) {
+  /* sensores DnD */
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
 
   const onDragEnd = (evt: DragEndEvent) => {
     const { active, over } = evt;
     if (!over || active.id === over.id) return;
-    const oldIndex = value.findIndex((c) => c.id === active.id);
-    const newIndex = value.findIndex((c) => c.id === over.id);
+    const oldIndex = value.indexOf(active.id as MetricKey);
+    const newIndex = value.indexOf(over.id as MetricKey);
     onChange(arrayMove(value, oldIndex, newIndex));
   };
 
   /* adicionar / remover */
   const [pickerOpen, setPickerOpen] = useState(false);
+
   const addMetric = (key: MetricKey) => {
-    const opt = METRIC_OPTIONS.find((o) => o.key === key);
-    if (!opt) return;
-    if (value.some((c) => c.id === key)) return;
-    if (value.length >= maxItems) return; // max 6
-    onChange([...value, { id: opt.key, label: opt.label, invert: opt.invert }]);
+    if (value.includes(key) || value.length >= maxItems) return;
+    onChange([...value, key]);
     setPickerOpen(false);
   };
-  const removeMetric = (id: MetricKey) => {
-    if (value.length <= minItems) return; // sempre deixa pelo menos 1
-    onChange(value.filter((c) => c.id !== id));
+
+  const removeMetric = (key: MetricKey) => {
+    if (value.length <= minItems) return;
+    onChange(value.filter((id) => id !== key));
   };
 
-  /* ui */
   const reachedMax = value.length >= maxItems;
   const reachedMin = value.length <= minItems;
 
+  /* ui */
   return (
     <div className="flex items-center gap-2 overflow-hidden flex-wrap">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={value.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
-          {value.map((chip, idx) => (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={onDragEnd}
+      >
+        <SortableContext
+          items={value}
+          strategy={horizontalListSortingStrategy}
+        >
+          {value.map((id, idx) => (
             <SortableChip
-              key={chip.id}
-              id={chip.id}
+              key={id}
+              id={id}
               index={idx}
-              label={chip.label}
-              onRemove={() => removeMetric(chip.id)}
+              label={LABEL_LOOKUP[id]}
+              onRemove={() => removeMetric(id)}
               disableRemove={reachedMin && value.length === 1}
             />
           ))}
         </SortableContext>
       </DndContext>
 
-      {/* add metric */}
+      {/* botão "Adicionar" */}
       <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 shrink-0" disabled={reachedMax}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 shrink-0"
+            disabled={reachedMax}
+          >
             <Plus className="h-4 w-4 mr-1" /> Adicionar métrica
           </Button>
         </PopoverTrigger>
@@ -145,7 +182,7 @@ export function MetricChipsBar({ value, onChange, maxItems = 6, minItems = 1 }: 
                 <CommandItem
                   key={opt.key}
                   onSelect={() => addMetric(opt.key)}
-                  disabled={value.some((c) => c.id === opt.key) || reachedMax}
+                  disabled={value.includes(opt.key) || reachedMax}
                 >
                   {opt.label}
                 </CommandItem>
@@ -159,6 +196,7 @@ export function MetricChipsBar({ value, onChange, maxItems = 6, minItems = 1 }: 
 }
 
 /* ================= chip sortável ================= */
+
 interface SortableChipProps {
   id: MetricKey;
   index: number;
@@ -167,7 +205,13 @@ interface SortableChipProps {
   disableRemove?: boolean;
 }
 
-function SortableChip({ id, index, label, onRemove, disableRemove }: SortableChipProps) {
+function SortableChip({
+  id,
+  index,
+  label,
+  onRemove,
+  disableRemove,
+}: SortableChipProps) {
   const {
     attributes,
     listeners,
@@ -185,8 +229,8 @@ function SortableChip({ id, index, label, onRemove, disableRemove }: SortableChi
   return (
     <div
       ref={setNodeRef as React.Ref<HTMLDivElement>}
-      className="flex items-center gap-1 cursor-default select-none py-1.5 px-2.5 rounded-2xl bg-muted text-muted-foreground hover:bg-muted/80 text-sm whitespace-nowrap"
       style={style}
+      className="flex items-center gap-1 cursor-default select-none py-1.5 px-2.5 rounded-2xl bg-muted text-muted-foreground hover:bg-muted/80 text-sm whitespace-nowrap"
     >
       {/* drag handle */}
       <span
@@ -196,10 +240,12 @@ function SortableChip({ id, index, label, onRemove, disableRemove }: SortableChi
       >
         <GripVertical className="h-3 w-3 mr-1" />
       </span>
-      <span>{index + 1}. {label}</span>
+      <span>
+        {index + 1}. {label}
+      </span>
       <button
         type="button"
-        className="ml-1 p-0.5 rounded hover:bg-foreground/10 focus:outline-none disabled:opacity-40"
+        className="ml-1 p-0.5 rounded hover:bg-foreground/10 disabled:opacity-40"
         onClick={(e) => {
           e.stopPropagation();
           if (!disableRemove) onRemove();
