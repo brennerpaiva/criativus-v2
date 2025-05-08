@@ -8,28 +8,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 interface SelectGenericProps {
   label: string;
-  items: { value: string, label: string }[];
+  items: SelectOption[];
+  icon?: React.ReactNode;                 // ⬅️ NOVO: ícone fixo
   placeholder?: string;
   onValueChange?: (value: string) => void;
   className?: string;
-  defaultValue?: string; // Propriedade adicionada
+  value?: string;
 }
 
 export function SelectGeneric({
   label,
   items,
+  icon,
   placeholder = "Select an option",
   onValueChange,
   className,
-  defaultValue,
+  value,
 }: SelectGenericProps) {
+  const selected = items.find((i) => i.value === value);
+
   return (
-    <Select defaultValue={defaultValue} onValueChange={onValueChange}>
+    <Select value={value} onValueChange={onValueChange}>
+      {/* ───── Trigger ───── */}
       <SelectTrigger className={`shadcn-select-trigger ${className}`}>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue asChild>
+          <div className="flex items-center gap-2 truncate">
+            {icon && <span className="shrink-0">{icon}</span>}
+            {selected ? (
+              <span className="truncate">{selected.label}</span>
+            ) : (
+              <span className="text-muted-foreground truncate">
+                {placeholder}
+              </span>
+            )}
+          </div>
+        </SelectValue>
       </SelectTrigger>
+
+      {/* ───── Lista ───── */}
       <SelectContent className="shadcn-select-content">
         <SelectGroup>
           <SelectLabel className="shadcn-select-label">{label}</SelectLabel>
