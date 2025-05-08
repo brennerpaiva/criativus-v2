@@ -4,6 +4,7 @@ import { CardAdComponent } from "@/components/business/cards/card-creative.compo
 import { FloatingVideoCard } from "@/components/business/cards/card-video-floating";
 import { FilterBarComponent } from "@/components/business/filter/filter-bar.component";
 import { MetricChipsBar } from "@/components/business/filter/metrics-chips-bar.component";
+import { SelectGeneric } from "@/components/business/filter/select-demo";
 import { Button } from "@/components/ui/button";
 import { DatePickerWithRange } from "@/components/ui/custom/date-picker-range";
 import {
@@ -12,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"; // <-- Import Popover do shadcn/ui
 import { Textarea } from "@/components/ui/textarea"; // <-- Import do Textarea do shadcn/ui
+import { METRIC_MAP, MetricKey } from "@/constants/metric";
 
 import { useAuth } from "@/context/auth.context";
 import FacebookAdsService from "@/service/graph-api.service";
@@ -20,123 +22,13 @@ import SnapshotService from "@/service/snapshot.service";
 import {
   CreativeGroup,
   groupAdsByCreative,
-  sortGroupsByPurchases,
+  sortGroupsByMetric
 } from "@/utils/creative.util";
-import { formatCurrency, formatNumber, formatPercent } from "@/utils/number-format";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { ArrowDownUp, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
-
-/* --------------------------------------------------
- * Métricas disponíveis e mapeamento dos campos do
- * aggregatedInsights + diff ➜ componente Card.
- * -------------------------------------------------*/
-const METRIC_MAP = {
-  /* ---------- já existentes ---------- */
-  tumbstock: {
-    label: "Thumb-stop",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) =>
-      formatPercent(i.tumbstock),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.tumbstock),
-  },
-  ctrLinkClick: {
-    label: "CTR (link click)",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.ctrLinkClick),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.ctrLinkClick),
-  },
-  cpcLinkClick: {
-    label: "CPC",
-    invert: true,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatCurrency(i.cpcLinkClick),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.cpcLinkClick),
-  },
-  cpm: {
-    label: "CPM",
-    invert: true,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatCurrency(i.cpm),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.cpm),
-  },
-  clickToPurchase: {
-    label: "Click to Purchase",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.clickToPurchase),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.clickToPurchase),
-  },
-  costSitePurchase: {
-    label: "Custo por Compra",
-    invert: true,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatCurrency(i.costSitePurchase),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.costSitePurchase),
-  },
-  purchase: {
-    label: "Compras",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.actions.purchase || 0),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.purchase),
-  },
-  roasCustom: {
-    label: "ROAS",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) =>
-      formatNumber(i.roasCustom, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.roasCustom),
-  },
-  spend: {
-    label: "Gasto (Spend)",
-    invert: true,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatCurrency(i.spend),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.spend),
-  },
-  impressions: {
-    label: "Impressões",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.impressions),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.impressions),
-  },
-  clicks: {
-    label: "Cliques",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.clicks),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.clicks),
-  },
-  ctr: {
-    label: "CTR",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.ctr),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.ctr),
-  },
-  costPerLandingPageView: {
-    label: "Cost per Landing Page View",
-    invert: true,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatCurrency(i.costPerLandingPageView),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.costPerLandingPageView),
-  },
-  siteArrivalRate: {
-    label: "Taxa de chegada ao site",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.siteArrivalRate),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.siteArrivalRate),
-  },
-  landingPageViews: {
-    label: "Landing Page Views",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.landingPageViews),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.landingPageViews),
-  },
-  purchaseRoas: {
-    label: "Purchase ROAS",
-    invert: false,
-    value: (i: CreativeGroup["aggregatedInsights"]) => formatNumber(i.purchaseRoas, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-    diff:  (i: CreativeGroup["aggregatedInsights"]) => formatPercent(i.diff.purchaseRoas),
-  },
-} as const;
-
-
-type MetricKey = keyof typeof METRIC_MAP;
 
 export default function CustomPage() {
   const router = useRouter();
@@ -159,6 +51,7 @@ export default function CustomPage() {
     "tumbstock",
     "ctrLinkClick",
   ]);
+  const [orderMetric, setOrderMetric] = useState<MetricKey>("tumbstock");
 
   /* ---------------- snapshot ------------------------ */
   const [openSnapshotPopover, setOpenSnapshotPopover] = useState(false);
@@ -238,14 +131,30 @@ export default function CustomPage() {
         since,
         until
       );
+
       const grouped = groupAdsByCreative(filteredAds.data);
-      setGroupedData(sortGroupsByPurchases(grouped));
-    } catch (err) {
-      console.error("Erro ao buscar dados:", err);
+      setGroupedData(sortGroupsByMetric(grouped, orderMetric));
     } finally {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!groupedData) return;
+    setGroupedData((prev) =>
+      prev ? sortGroupsByMetric(Object.fromEntries(prev.map(g => [g.creative.id, g])), orderMetric) : prev
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderMetric]);
+
+  /* mantém orderMetric válido sempre que metricsOrder mudar */
+  useEffect(() => {
+    // se o item atualmente selecionado deixou de existir…
+    if (metricsOrder.length && !metricsOrder.includes(orderMetric)) {
+      setOrderMetric(metricsOrder[0] as MetricKey);  // …seleciona o primeiro
+    }
+  }, [metricsOrder, orderMetric]);
+
 
   /* -------------- helpers UI ----------------------- */
   function handleOpenVideoCard(
@@ -324,22 +233,25 @@ export default function CustomPage() {
           </PopoverContent>
         </Popover>
       </div>
-
-      {/* ---------- filtros ---------- */}
-        {/* <SelectGeneric
-          label="Agrupar por"
-          placeholder="Agrupar por"
-          defaultValue="criativo"
-          items={[{ value: "criativo", label: "Criativos" }]}
-          className="w-[140px]"
-        /> */}
-        <DatePickerWithRange value={dateRange} onChange={onDateRangeApply} />
+      <div className="flex w-full gap-2">
+       <DatePickerWithRange value={dateRange} onChange={onDateRangeApply} />
+        <SelectGeneric
+          label="Ordenar por"
+          icon={<ArrowDownUp className="h-4 w-4" />}
+          placeholder="Métrica"
+          value={orderMetric}
+          items={metricsOrder.map((m) => ({ value: m, label: METRIC_MAP[m].label }))}
+          onValueChange={(val) => setOrderMetric(val as MetricKey)}
+          className="w-[200px]"
+        />
+      </div>
+        
       <FilterBarComponent>
         <MetricChipsBar
           value={metricsOrder}
           onChange={setMetricsOrder}
           maxItems={6}
-          minItems={0}
+          minItems={1}
         />
       </FilterBarComponent>
 

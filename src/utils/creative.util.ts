@@ -1,3 +1,5 @@
+import { MetricKey } from "@/components/business/filter/metrics-chips-bar.component";
+import { METRIC_MAP } from "@/constants/metric";
 import { AdCreativeInsight } from "@/types/model/creative-insights.model";
 
 /** Estrutura de um grupo de anúncios por criativo */
@@ -164,8 +166,9 @@ export function groupAdsByCreative(
 
 /* ---------- ordenação + cálculo de diferenças ------------------------------------ */
 
-export function sortGroupsByPurchases(
-  grouped: Record<string, CreativeGroup>
+export function sortGroupsByMetric(
+  grouped: Record<string, CreativeGroup>,
+  metric: MetricKey
 ): CreativeGroup[] {
   const groups = Object.values(grouped);
   if (!groups.length) return [];
@@ -222,11 +225,19 @@ export function sortGroupsByPurchases(
   }
 
   /* 3. ordena por total de compras ------------------------ */
-  groups.sort(
-    (a, b) =>
-      (b.aggregatedInsights.actions.purchase || 0) -
-      (a.aggregatedInsights.actions.purchase || 0)
-  );
+  groups.sort((a, b) => {
+    const aVal =
+      metric === "purchase"
+        ? a.aggregatedInsights.actions.purchase || 0
+        : (a.aggregatedInsights as any)[metric] ?? 0;
+    const bVal =
+      metric === "purchase"
+        ? b.aggregatedInsights.actions.purchase || 0
+        : (b.aggregatedInsights as any)[metric] ?? 0;
+
+    // métricas com invert=true → menor é “melhor”
+    return METRIC_MAP[metric].invert ? aVal - bVal : bVal - aVal;
+  });
 
   return groups;
 }
