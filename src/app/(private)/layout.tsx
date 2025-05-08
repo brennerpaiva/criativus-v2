@@ -15,7 +15,6 @@ import {
 import { AppSidebar } from "@/components/business/layout/app-sidebar.component";
 import { HeaderActions } from "@/components/business/layout/header-actions-user.component";
 import { useAuth } from "@/context/auth.context";
-import { ReportsProvider } from "@/context/reports.context";
 import { useReportStore } from "@/store/report/user-report.store";
 import { useEffect } from "react";
 
@@ -34,7 +33,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     }, [pathname, setCurrentBySlug]);
 
   return (
-    <ReportsProvider>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
@@ -73,6 +71,5 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           </div>
         </SidebarInset>
       </SidebarProvider>
-    </ReportsProvider>
   );
 }
