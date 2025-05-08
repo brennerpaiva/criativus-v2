@@ -17,7 +17,12 @@ const ReportService = {
   async findBySlug(slug: string): Promise<ReportModel> {
     const response = await apiClient.get<ReportModel>(`/reports/${slug}`);
     return response.data;
-  }   
+  },
+  
+  async deleteReportBySlug(slug: string): Promise<ReportModel> {
+    const response = await apiClient.delete<ReportModel>(`/reports/${slug}`);
+    return response.data;
+  },
 }
 
 export default ReportService;
