@@ -1,21 +1,32 @@
-// src/components/business/reports/create-report-popover.tsx
+/* ------------------------------------------------------------------
+ * src/components/business/reports/create-report-popover.tsx
+ * ------------------------------------------------------------------
+ * Popover para criar relatório:
+ * • Chama a API, adiciona o novo relatório na store
+ * • Redireciona para a página recém-criada
+ * ----------------------------------------------------------------*/
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import ReportService from "@/service/report.service";
+import { useReportStore } from "@/store/report/user-report.store";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-
 export function CreateReportPopover() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const reportService = ReportService;
+
+  const addReport = useReportStore((s) => s.addReport);
   const router = useRouter();
 
   async function handleSubmit(e: FormEvent) {
@@ -24,14 +35,11 @@ export function CreateReportPopover() {
 
     setLoading(true);
     try {
-      const payload = {
-        name,
-        description
-      }
-      const res = await reportService.createReport(payload)
+      const payload = { name, description };
+      const report = await ReportService.createReport(payload); // { id, name, slug, ... }
 
-      if (!res) throw new Error("Falha ao criar relatório");
-      const report = await res; // { id, slug, ... }
+      /* grava no estado global → sidebar atualiza instantaneamente */
+      addReport({ id: report.id, name: report.name, slug: report.slug });
 
       setOpen(false);
       router.push(`/reports/${report.slug}`);
@@ -43,8 +51,8 @@ export function CreateReportPopover() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="px-2 mx-2">
-          <Plus className="mr-2 h-4 w-4" />
+        <Button variant="ghost_primary" className="px-2 mx-2">
+          <Plus className="h-4 w-4" />
           Criar relatório
         </Button>
       </PopoverTrigger>
