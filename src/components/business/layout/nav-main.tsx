@@ -1,13 +1,10 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
-import { usePathname } from "next/navigation"
-
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -16,7 +13,10 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { ChevronRight, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type NavItem = {
   title: string
@@ -54,7 +54,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
               key={item.title}
               asChild
               // Garantir que abra quando for "ativo"
-              defaultOpen={shouldOpen}
+              defaultOpen={true}
               className="group/collapsible"
             >
               <SidebarMenuItem>
@@ -80,7 +80,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                       return (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
-                            <a
+                            <Link
                               href={subItem.url}
                               // Classes de exemplo para destacar sub-item ativo:
                               className={
@@ -90,7 +90,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                               }
                             >
                               <span>{subItem.title}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       )
