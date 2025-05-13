@@ -19,6 +19,7 @@ import { useAuth } from "@/context/auth.context";
 import FacebookAdsService from "@/service/graph-api.service";
 import ReportService from "@/service/report.service";
 import SnapshotService from "@/service/snapshot.service";
+import { usePageConfigStore } from "@/store/report/collection.store";
 import {
   CreativeGroup,
   groupAdsByCreative,
@@ -27,30 +28,55 @@ import {
 import { format } from "date-fns";
 import { ArrowDownUp, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
+
+
+const ensureDateObjects = (r?: DateRange): DateRange | undefined =>
+  r
+    ? {
+        from: r.from && !(r.from instanceof Date) ? new Date(r.from) : r.from,
+        to: r.to && !(r.to instanceof Date) ? new Date(r.to) : r.to,
+      }
+    : undefined;
+
+
+  const buildDefaultDateRange = (): DateRange => {
+    const today = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    return { from: sevenDaysAgo, to: today } as DateRange;
+  };
+
+const DEFAULT_FILTERS = {
+  metricsOrder: ["tumbstock", "ctrLinkClick"] as MetricKey[],
+  sorted: "tumbstock" as MetricKey,
+  dateRange: buildDefaultDateRange(),
+};
 
 export default function CustomPage() {
   const router = useRouter();
   const { activeAdAccount } = useAuth();
   const { slug } = useParams<{ slug: string }>();
-  const [report, setReport] = useState<Awaited<ReturnType<typeof ReportService.findBySlug>> | null>(null);
+ 
+  const setCurrentPageConfig = usePageConfigStore(
+    (s) => s.setCurrentPageConfig,
+  );
+  const updateListFilters = usePageConfigStore((s) => s.updateListFilters);
+  const currentPageConfig = usePageConfigStore((s) => s.currentPageConfig);
 
   /* ---------------- filtros de período -------------- */
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    const today = new Date();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(today.getDate() - 6);
-    return { from: sevenDaysAgo, to: today } as DateRange;
-  });
-
+  const listFilters = currentPageConfig?.listFilters ?? DEFAULT_FILTERS;
+  const metricsOrder = listFilters.metricsOrder ?? [];
+  const sorted = listFilters.sorted ?? "tumbstock";
+  const dateRange = useMemo(
+    () =>
+      ensureDateObjects(listFilters.dateRange) ?? DEFAULT_FILTERS.dateRange,
+    [listFilters.dateRange],
+  );
   /* ---------------- estados principais -------------- */
   const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [metricsOrder, setMetricsOrder] = useState<MetricKey[]>([
-    "tumbstock",
-    "ctrLinkClick",
-  ]);
   const [orderMetric, setOrderMetric] = useState<MetricKey>("tumbstock");
 
   /* ---------------- snapshot ------------------------ */
@@ -68,7 +94,25 @@ export default function CustomPage() {
     (async () => {
       try {
         const resp = await ReportService.findBySlug(slug);
-        setReport(resp);
+        // setReport(resp);
+        setCurrentPageConfig({
+          listFilters: {
+            metricsOrder: resp.metricsOrder ?? DEFAULT_FILTERS.metricsOrder,
+            sorted: (resp.sorted as MetricKey) ?? DEFAULT_FILTERS.sorted,
+            dateRange:
+              resp.dateStart && resp.dateEnd
+                ? {
+                    from: new Date(resp.dateStart),
+                    to: new Date(resp.dateEnd),
+                  }
+                : DEFAULT_FILTERS.dateRange,
+          },
+          name: resp.name,
+          description: resp.description ?? "",
+          icon: "",
+          slug: resp.slug,
+          id: resp.id.toString(),
+        });
       } catch (err) {
         console.error(err);
         // router.push("/404"); // redireciona se 404 ou 403
@@ -89,7 +133,9 @@ export default function CustomPage() {
 
 
   async function onDateRangeApply(newRange: DateRange | undefined) {
-    setDateRange(newRange);
+    if(!newRange){return}
+    // setDateRange(newRange);
+    updateListFilters({ dateRange: newRange });
     if (newRange && activeAdAccount) await fetchData(newRange);
   }
 
@@ -133,7 +179,7 @@ export default function CustomPage() {
       );
 
       const grouped = groupAdsByCreative(filteredAds.data);
-      setGroupedData(sortGroupsByMetric(grouped, orderMetric));
+      setGroupedData(sortGroupsByMetric(grouped, sorted));
     } finally {
       setIsLoading(false);
     }
@@ -142,18 +188,19 @@ export default function CustomPage() {
   useEffect(() => {
     if (!groupedData) return;
     setGroupedData((prev) =>
-      prev ? sortGroupsByMetric(Object.fromEntries(prev.map(g => [g.creative.id, g])), orderMetric) : prev
+      prev ? sortGroupsByMetric(Object.fromEntries(prev.map(g => [g.creative.id, g])), sorted) : prev
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderMetric]);
+  }, [sorted]);
 
   /* mantém orderMetric válido sempre que metricsOrder mudar */
   useEffect(() => {
     // se o item atualmente selecionado deixou de existir…
-    if (metricsOrder.length && !metricsOrder.includes(orderMetric)) {
-      setOrderMetric(metricsOrder[0] as MetricKey);  // …seleciona o primeiro
+    if(!metricsOrder) {return}
+    if (metricsOrder.length && !metricsOrder.includes(sorted)) {
+      updateListFilters({ sorted: metricsOrder[0] });// …seleciona o primeiro
     }
-  }, [metricsOrder, orderMetric]);
+  }, [metricsOrder, sorted]);
 
 
   /* -------------- helpers UI ----------------------- */
@@ -205,9 +252,9 @@ export default function CustomPage() {
         <div className="flex gap-2 flex-col">
           {/* <img src="/fire.gif" alt="fire" className="w-10" /> */}
           <h1 className="text-3xl font-bold my-auto">
-            {report ? report.name : ""}
+            {currentPageConfig ? currentPageConfig.name : ""}
           </h1>
-          <p> {report ? report.description : ""}</p>
+          <p> {currentPageConfig ? currentPageConfig.description : ""}</p>
         </div>
 
         <Popover open={openSnapshotPopover} onOpenChange={setOpenSnapshotPopover}>
@@ -234,14 +281,16 @@ export default function CustomPage() {
         </Popover>
       </div>
       <div className="flex w-full gap-2">
-       <DatePickerWithRange value={dateRange} onChange={onDateRangeApply} />
+        <DatePickerWithRange value={dateRange} onChange={onDateRangeApply} />
         <SelectGeneric
           label="Ordenar por"
           icon={<ArrowDownUp className="h-4 w-4" />}
           placeholder="Métrica"
-          value={orderMetric}
+          value={sorted}
           items={metricsOrder.map((m) => ({ value: m, label: METRIC_MAP[m].label }))}
-          onValueChange={(val) => setOrderMetric(val as MetricKey)}
+          onValueChange={(val) =>
+            updateListFilters({ sorted: val as MetricKey })
+          }
           className="w-[200px]"
         />
       </div>
@@ -249,7 +298,7 @@ export default function CustomPage() {
       <FilterBarComponent>
         <MetricChipsBar
           value={metricsOrder}
-          onChange={setMetricsOrder}
+          onChange={(order) => updateListFilters({ metricsOrder: order })}
           maxItems={6}
           minItems={1}
         />
@@ -314,4 +363,5 @@ export default function CustomPage() {
     </div>
   );
 }
+
 
