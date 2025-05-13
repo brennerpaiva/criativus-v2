@@ -4,12 +4,12 @@
  * Sidebar da aplicação:
  * • Lê relatórios do back-end apenas uma vez (se ainda não há cache)
  * • Grava/consome a lista via Zustand + persist
- * • Injeta os relatórios em “Relatórios Customizados”
+ * • Injeta os relatórios em "Relatórios Customizados"
  * ----------------------------------------------------------------*/
 "use client";
 
 import { SquareTerminal } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { NavMain } from "@/components/business/layout/nav-main";
 import { NavUser } from "@/components/business/layout/nav-user";
@@ -41,7 +41,7 @@ const BASE_NAV = [
     ],
   },
   {
-    title: "Relatórios",
+    title: "Relatórios Customizados",
     url: "#",
     icon: SquareTerminal,
     isActive: true,
@@ -51,47 +51,56 @@ const BASE_NAV = [
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
-
-  /* Zustand store ------------------------------------------------ */
   const { reports, loaded, setReports } = useReportStore();
-
-  /* estado local do menu ---------------------------------------- */
-  const [navItems, setNavItems] = useState(BASE_NAV);
-
-  /* 1. Carrega relatórios só se não houver cache ---------------- */
+  // Carrega relatórios se ainda não houver dados persistidos
   useEffect(() => {
-    if (loaded) return; // já persistidos → evita request
-
+    console.log(reports.length);
+    if (reports.length > 0 || loaded) return;
+    if (!loaded) return;
     (async () => {
       try {
         const apiReports = await ReportService.listReports();
         setReports(
-          apiReports.map(({ id, name, slug }) => ({ id, name, slug })),
+          apiReports.map(report => ({
+            id: report.id,
+            name: report.name,
+            slug: report.slug,
+            metricsOrder: report.metricsOrder ?? undefined,
+            sorted: report.sorted ?? undefined,
+            dateRange: report.dateStart && report.dateEnd
+              ? { from: new Date(report.dateStart), to: new Date(report.dateEnd) }
+              : undefined,
+          }))
         );
       } catch (err) {
         console.error(err);
         alert("Erro ao listar relatórios");
       }
     })();
-  }, [loaded, setReports]);
+  }, [reports, loaded, setReports]);
 
-  /* 2. Atualiza menu sempre que a lista mudar ------------------- */
-  useEffect(() => {
-    const reportLinks = reports.map((r) => ({
-      title: r.name,
-      url: `/reports/${r.slug}`,
-    }));
+  // Monta os itens dinamicamente
+  const navItems = [
+    {
+      title: "Top Criativos",
+      url: "#",
+      icon: SquareTerminal,
+      items: [
+        { title: "Vendas", url: "/top-criativos-vendas" },
+        { title: "Visitas", url: "/top-criativos-visitas" },
+      ],
+    },
+    {
+      title: "Relatórios Customizados",
+      url: "#",
+      icon: SquareTerminal,
+      items: reports.map((r) => ({
+        title: r.name,
+        url: `/reports/${r.slug}`,
+      })),
+    },
+  ];
 
-    setNavItems((prev) =>
-      prev.map((item) =>
-        item.title === "Relatórios"
-          ? { ...item, items: reportLinks }
-          : item,
-      ),
-    );
-  }, [reports]);
-
-  /* render ------------------------------------------------------- */
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -108,3 +117,4 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   );
 }
+

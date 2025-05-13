@@ -6,50 +6,115 @@
  * ----------------------------------------------------------------*/
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
-
 import { Button } from "@/components/ui/button";
 import ReportService from "@/service/report.service";
-import { useReportStore } from "@/store/report/user-report.store";
+import { ListFiltersPageConfig, usePageConfigStore } from "@/store/report/collection.store";
+import { ReportInfo, useReportStore } from "@/store/report/user-report.store";
 import { Trash2 } from "lucide-react";
-// import ReportService from "@/service/report.service"; // habilite quando tiver endpoint
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function HeaderActions() {
-  const pathname = usePathname();
-  const router   = useRouter();
-  const { currentReport, loaded, setReports } = useReportStore();
-  const removeReport = useReportStore((s) => s.removeReport);
-  console.log(currentReport)
+  const router = useRouter();
+  const { findReportBySlug, removeReport } = useReportStore();
+  const setCurrentPageConfig = usePageConfigStore((state) => state.setCurrentPageConfig);
+  const currentPageConfig = usePageConfigStore((state) => state.currentPageConfig);
+  const [disabledSaveButton, setDisabledSaveButton] = useState<boolean>(true);
 
-  /* -------- excluir -------- */
+  useEffect(() => {
+    if (!currentPageConfig?.slug || !currentPageConfig?.listFilters) return;
+    const reportMatch = findReportBySlug(currentPageConfig.slug);
+    const isDifferent = checkDifferencesFiltersReports(
+      currentPageConfig.listFilters,
+      reportMatch
+    );
+    setDisabledSaveButton(!isDifferent);
+  }, [currentPageConfig, findReportBySlug]);
+
   const handleDelete = async () => {
-    if (!currentReport) return;
-    if (!confirm(`Excluir o relatório "${currentReport.name}" permanentemente?`)) return;
+    if (!currentPageConfig?.slug) return;
+    if (!confirm(`Excluir o relatório \"${currentPageConfig.name}\" permanentemente?`)) return;
 
     try {
-      const response = await ReportService.deleteReportBySlug(currentReport.slug)
-      removeReport(currentReport.slug);
-      router.push("/top-criativos-vendas");     // volta para lista
+      await ReportService.deleteReportBySlug(currentPageConfig.slug);
+      removeReport(currentPageConfig.slug);
+      router.push("/top-criativos-vendas");
     } catch {
       alert("Erro ao excluir relatório");
     }
   };
 
-  /* -------- render -------- */
+  const handleSave = async () => {
+    if (!currentPageConfig?.slug || !currentPageConfig?.listFilters) return;
+    if (!confirm(`Salvar o relatório \"${currentPageConfig.name}\" permanentemente?`)) return;
+
+    try {
+      const response = await ReportService.updateReportBySlug(
+        currentPageConfig.listFilters,
+        currentPageConfig.slug
+      );
+      alert(response);
+    } catch {
+      alert("Erro ao salvar relatório");
+    }
+  };
+
+  function checkDifferencesFiltersReports(
+    currentFilters: ListFiltersPageConfig,
+    reportMatch?: ReportInfo
+  ): boolean {
+    if (!reportMatch) return true;
+
+    const currentMetricsOrder = currentFilters.metricsOrder || [];
+    const reportMetricsOrder = reportMatch.metricsOrder || [];
+
+    if (currentMetricsOrder.length !== reportMetricsOrder.length) return true;
+    if (!currentMetricsOrder.every((m, i) => m === reportMetricsOrder[i])) return true;
+
+    if (currentFilters.sorted !== reportMatch.sorted) return true;
+
+    const { dateRange: currentDateRange } = currentFilters;
+    const { dateRange: reportDateRange } = reportMatch;
+
+    if (!currentDateRange || !reportDateRange) {
+      return currentDateRange !== reportDateRange;
+    }
+
+    const toDateOnly = (value: unknown) => {
+      const date = value instanceof Date ? value : new Date(value as string);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+
+    try {
+      const currentFrom = toDateOnly(currentDateRange.from);
+      const currentTo = toDateOnly(currentDateRange.to);
+      const reportFrom = toDateOnly(reportDateRange.from);
+      const reportTo = toDateOnly(reportDateRange.to);
+
+      if (currentFrom.getTime() !== reportFrom.getTime() || currentTo.getTime() !== reportTo.getTime()) {
+        return true;
+      }
+    } catch {
+      return true;
+    }
+
+    return false;
+  }
+
   return (
     <div className="flex items-center gap-4">
-      {/* <h2 className="text-lg font-semibold">
-        {currentReport ? currentReport.name : "Página"}
-      </h2> */}
-
-      {currentReport && (
+      {currentPageConfig && (
         <>
-         <Button variant="outline" size="sm" onClick={handleDelete}>
+          <Button
+            variant="outline"
+            disabled={disabledSaveButton}
+            size="sm"
+            onClick={handleSave}
+          >
             Salvar
           </Button>
           <Button variant="outline" size="sm" onClick={handleDelete}>
             <Trash2 className="h-4 w-4 mr-1" />
-            {/* Excluir */}
           </Button>
         </>
       )}
