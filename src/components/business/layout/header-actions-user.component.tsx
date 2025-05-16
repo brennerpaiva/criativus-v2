@@ -17,13 +17,19 @@ import { useEffect, useState } from "react";
 export function HeaderActions() {
   const router = useRouter();
   const { findReportBySlug, removeReport } = useReportStore();
-  const setCurrentPageConfig = usePageConfigStore((state) => state.setCurrentPageConfig);
   const currentPageConfig = usePageConfigStore((state) => state.currentPageConfig);
   const [disabledSaveButton, setDisabledSaveButton] = useState<boolean>(true);
+  const [hiddeButtons, setHiddeButtons] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!currentPageConfig?.slug || !currentPageConfig?.listFilters) return;
+    if (!currentPageConfig?.slug || !currentPageConfig?.listFilters) {
+      return
+    }
     const reportMatch = findReportBySlug(currentPageConfig.slug);
+    if (!reportMatch) {
+      return;
+    }
+    setHiddeButtons(false);
     const isDifferent = checkDifferencesFiltersReports(
       currentPageConfig.listFilters,
       reportMatch
@@ -103,7 +109,7 @@ export function HeaderActions() {
 
   return (
     <div className="flex items-center gap-4">
-      {currentPageConfig && (
+      {currentPageConfig && !hiddeButtons && (
         <>
           <Button
             variant="outline"

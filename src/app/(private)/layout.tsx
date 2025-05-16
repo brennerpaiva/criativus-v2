@@ -6,7 +6,7 @@ import "../../assets/styles/globals.css";
 
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink,
-  BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+  BreadcrumbList, BreadcrumbPage
 } from "@/components/ui/breadcrumb";
 import {
   SidebarInset, SidebarProvider, SidebarTrigger,
@@ -15,22 +15,23 @@ import {
 import { AppSidebar } from "@/components/business/layout/app-sidebar.component";
 import { HeaderActions } from "@/components/business/layout/header-actions-user.component";
 import { useAuth } from "@/context/auth.context";
-import { useReportStore } from "@/store/report/user-report.store";
+import { usePageConfigStore } from "@/store/report/collection.store";
 import { useEffect } from "react";
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
   const pathname      = usePathname();
-  const setCurrentBySlug = useReportStore((s) => s.setCurrentBySlug);
+  // const setCurrentBySlug = useReportStore((s) => s.setCurrentBySlug);
   const { activeAdAccount } = useAuth();
-
-  /* fallback para páginas que não são relatório */
-  const defaultTitle = pathname === "/" ? "Home"
-    : pathname.split("/").filter(Boolean).pop()?.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) ?? "";
+  const resetPageConfig = usePageConfigStore(
+      (s) => s.resetPageConfig,
+    );
 
     useEffect(() => {
-      const slug = pathname.match(/\/(?:reports|relatorios)\/([^/]+)/)?.[1] ?? null;
-      setCurrentBySlug(slug);
-    }, [pathname, setCurrentBySlug]);
+      // const slug = pathname.match(/\/(?:reports|relatorios)\/([^/]+)/)?.[1] ?? null;
+      resetPageConfig()
+    }, []);
+
+  /* fallback para páginas que não são relatório */
 
   return (
       <SidebarProvider>
@@ -50,11 +51,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                         <BreadcrumbItem className="hidden md:block">
                           <BreadcrumbLink>{activeAdAccount.name}</BreadcrumbLink>
                         </BreadcrumbItem>
-                        <BreadcrumbSeparator className="hidden md:block" />
+                        {/* <BreadcrumbSeparator className="hidden md:block" /> */}
                       </>
                     )}
                     <BreadcrumbItem>
-                      <BreadcrumbPage>{defaultTitle}</BreadcrumbPage>
+                      <BreadcrumbPage></BreadcrumbPage>
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>

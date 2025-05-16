@@ -29,7 +29,6 @@ export const SignUpFormComponent = () => {
       await authService.signUp(data);
       router.push('/login');
     } catch (err) {
-      console.log(err);
       alert('Falha ao registrar o usuário:');
       // Tratar a falha apropriadamente, por exemplo, mostrar uma mensagem de erro ao usuário
     }

@@ -12,7 +12,6 @@ export default function SignInPage() {
     async function fetchAdAccounts() {
       // try {
       //   const accounts = await FacebookAdsService.getAdAccounts();
-      //   // console.log("Ad Accounts:", accounts);
       //   // setAdAccounts(accounts);
       // } catch (error) {
       //   console.error("Erro ao buscar contas de anúncios:", error);

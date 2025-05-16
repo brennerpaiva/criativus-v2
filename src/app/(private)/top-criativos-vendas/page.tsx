@@ -3,6 +3,7 @@
 import { CardAdComponent } from "@/components/business/cards/card-creative.component";
 import { FloatingVideoCard } from "@/components/business/cards/card-video-floating";
 import { FilterBarComponent } from "@/components/business/filter/filter-bar.component";
+import { MetricChipsBar } from "@/components/business/filter/metrics-chips-bar.component";
 import { SelectGeneric } from "@/components/business/filter/select-demo";
 import { Button } from "@/components/ui/button";
 import { DatePickerWithRange } from "@/components/ui/custom/date-picker-range";
@@ -12,79 +13,136 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"; // <-- Import Popover do shadcn/ui
 import { Textarea } from "@/components/ui/textarea"; // <-- Import do Textarea do shadcn/ui
+import { METRIC_MAP, MetricKey } from "@/constants/metric";
 
 import { useAuth } from "@/context/auth.context";
 import FacebookAdsService from "@/service/graph-api.service";
 import SnapshotService from "@/service/snapshot.service";
+import { usePageConfigStore } from "@/store/report/collection.store";
 import {
   CreativeGroup,
   groupAdsByCreative,
-  sortGroupsByPurchases,
+  sortGroupsByMetric
 } from "@/utils/creative.util";
-import { formatCurrency, formatNumber, formatPercent } from "@/utils/number-format";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ArrowDownUp, Loader2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 
-export default function TopCriativosVendasPage() {
-  const router = useRouter();
-  const { activeAdAccount } = useAuth();
+const ensureDateObjects = (r?: DateRange): DateRange | undefined =>
+  r
+    ? {
+        from: r.from && !(r.from instanceof Date) ? new Date(r.from) : r.from,
+        to: r.to && !(r.to instanceof Date) ? new Date(r.to) : r.to,
+      }
+    : undefined;
 
-  // Inicializa a data com os últimos 7 dias
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+const buildDefaultDateRange = (): DateRange => {
     const today = new Date();
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(today.getDate() - 6);
-    return {
-      from: sevenDaysAgo,
-      to: today,
-    };
-  });
+    return { from: sevenDaysAgo, to: today } as DateRange;
+};
 
+const DEFAULT_FILTERS = {
+  metricsOrder: ["tumbstock", "ctrLinkClick"] as MetricKey[],
+  sorted: "tumbstock" as MetricKey,
+  dateRange: buildDefaultDateRange(),
+};
+
+export default function CustomPage() {
+  const router = useRouter();
+  const { activeAdAccount } = useAuth();
+  const { slug } = useParams<{ slug: string }>();
+ 
+  const setCurrentPageConfig = usePageConfigStore(
+    (s) => s.setCurrentPageConfig,
+  );
+  const updateListFilters = usePageConfigStore((s) => s.updateListFilters);
+  const currentPageConfig = usePageConfigStore((s) => s.currentPageConfig);
+
+  /* ---------------- filtros de período -------------- */
+  const listFilters = currentPageConfig?.listFilters ?? DEFAULT_FILTERS;
+  const metricsOrder = listFilters.metricsOrder ?? [];
+  const sorted = listFilters.sorted ?? "tumbstock";
+  const dateRange = useMemo(
+    () =>
+      ensureDateObjects(listFilters.dateRange) ?? DEFAULT_FILTERS.dateRange,
+    [listFilters.dateRange],
+  );
+  /* ---------------- estados principais -------------- */
   const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [orderMetric, setOrderMetric] = useState<MetricKey>("tumbstock");
 
-  // Estados do popover de "Criar Snapshot"
+  /* ---------------- snapshot ------------------------ */
   const [openSnapshotPopover, setOpenSnapshotPopover] = useState(false);
   const [comment, setComment] = useState("");
 
-  // ESTADOS PARA CONTROLAR O VÍDEO SELECIONADO
-  const [openVideoCard, setOpenVideoCard] = useState<boolean>(false);
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | undefined>();
-  const [selectedVideoPoster, setSelectedVideoPoster] = useState<string | undefined>();
+  /* ---------------- vídeo flutuante ---------------- */
+  const [openVideoCard, setOpenVideoCard] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>();
+  const [selectedVideoPoster, setSelectedVideoPoster] = useState<string>();
   const [selectedAdTitle, setSelectedAdTitle] = useState<string>("");
 
+  /* -------------- efeitos -------------------------- */
   useEffect(() => {
+    (async () => {
+      try {
+        setCurrentPageConfig({
+          listFilters: {
+            metricsOrder: DEFAULT_FILTERS.metricsOrder,
+            sorted: DEFAULT_FILTERS.sorted,
+            dateRange: DEFAULT_FILTERS.dateRange,
+          },
+          name: 'Top Criativos - Vendas',
+          description: "",
+          icon: "",
+          slug: undefined,
+          id: undefined,
+        });
+      } catch (err) {
+        console.error(err);
+        // router.push("/404"); // redireciona se 404 ou 403
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+
+  useEffect(() => {
+
+
     if (activeAdAccount && dateRange?.from && dateRange?.to) {
       fetchData(dateRange);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAdAccount]);
 
+
   async function onDateRangeApply(newRange: DateRange | undefined) {
-    setDateRange(newRange);
-    if (newRange && activeAdAccount) {
-      await fetchData(newRange);
-    }
+    if(!newRange){return}
+    // setDateRange(newRange);
+    updateListFilters({ dateRange: newRange });
+    if (newRange && activeAdAccount) await fetchData(newRange);
   }
 
-  /**
-   * Busca o 'source' do vídeo na Graph API
-   * e, ao obter, abre o card flutuante com handleOpenVideoCard.
-   */
-  async function searchVideoCreative(videoId: string, posterUrl?: string, adTitle?: string) {
+  /* -------------- busca fonte do vídeo -------------- */
+  async function searchVideoCreative(
+    videoId: string,
+    posterUrl?: string,
+    adTitle?: string
+  ) {
     try {
-      const response = await FacebookAdsService.getVideoCreative(videoId);
-      // Supondo que a resposta seja algo como { source: "https://..." }
-      if (response?.source) {
-        handleOpenVideoCard(response.source, posterUrl, adTitle);
-      }
+      const res = await FacebookAdsService.getVideoCreative(videoId);
+      if (res?.source) handleOpenVideoCard(res.source, posterUrl, adTitle);
     } catch (err) {
-      console.error("Erro ao buscar o vídeo do criativo:", err);
+      console.error("Erro ao buscar vídeo:", err);
     }
   }
 
+  /* -------------- fetch de dados principais --------- */
   async function fetchData(range: DateRange) {
     try {
       setIsLoading(true);
@@ -94,114 +152,109 @@ export default function TopCriativosVendasPage() {
       const since = format(from, "yyyy-MM-dd");
       const until = format(to, "yyyy-MM-dd");
 
-      // 1. Busca insights para obter IDs de anúncios
       const insights = await FacebookAdsService.getAdInsights(
         activeAdAccount.id,
         since,
         until
       );
-      const adIds = insights.data.map((item) => item.ad_id);
-      if (adIds.length === 0) {
-        setGroupedData([]);
-        return;
-      }
+      const adIds = insights.data.map((i) => i.ad_id);
+      if (!adIds.length) return setGroupedData([]);
 
-      // 2. Busca anúncios filtrados
       const filteredAds = await FacebookAdsService.getFilteredAds(
         activeAdAccount.id,
         adIds,
         since,
         until
       );
-      const adsDesorganizados = filteredAds.data;
 
-      // 3. Agrupa e ordena
-      const grouped = groupAdsByCreative(adsDesorganizados);
-      const sortedGroups = sortGroupsByPurchases(grouped);
-      setGroupedData(sortedGroups);
-    } catch (err) {
-      console.error("Erro ao buscar dados:", err);
+      const grouped = groupAdsByCreative(filteredAds.data);
+      setGroupedData(sortGroupsByMetric(grouped, sorted));
     } finally {
       setIsLoading(false);
     }
   }
 
-  /**
-   * Exibe o Sheet com o vídeo
-   */
-  function handleOpenVideoCard(videoUrl?: string, posterUrl?: string, title?: string) {
-    if (videoUrl) {
-      setSelectedVideoUrl(videoUrl);
-      setSelectedVideoPoster(posterUrl);
-      setSelectedAdTitle(title || "Anúncio");
-      setOpenVideoCard(true);
+  useEffect(() => {
+    if (!groupedData) return;
+    setGroupedData((prev) =>
+      prev ? sortGroupsByMetric(Object.fromEntries(prev.map(g => [g.creative.id, g])), sorted) : prev
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sorted]);
+
+  /* mantém orderMetric válido sempre que metricsOrder mudar */
+  useEffect(() => {
+    // se o item atualmente selecionado deixou de existir…
+    if(!metricsOrder) {return}
+    if (metricsOrder.length && !metricsOrder.includes(sorted)) {
+      updateListFilters({ sorted: metricsOrder[0] });// …seleciona o primeiro
     }
+  }, [metricsOrder, sorted]);
+
+
+  /* -------------- helpers UI ----------------------- */
+  function handleOpenVideoCard(
+    videoUrl?: string,
+    posterUrl?: string,
+    title?: string
+  ) {
+    if (!videoUrl) return;
+    setSelectedVideoUrl(videoUrl);
+    setSelectedVideoPoster(posterUrl);
+    setSelectedAdTitle(title || "Anúncio");
+    setOpenVideoCard(true);
   }
 
-  /**
-   * Lida com o clique para abrir o popover de criar snapshot.
-   * Só abrimos o popover se houver dados carregados (groupedData).
-   */
   function handleOpenSnapshotPopover() {
-    if (!groupedData || groupedData.length === 0) return;
+    if (!groupedData?.length) return;
     setOpenSnapshotPopover(true);
   }
 
-  /**
-   * Envia o snapshot para o backend quando o usuário clica em "Gerar link"
-   */
   async function handleGenerateSnapshotLink() {
     if (!groupedData || !dateRange?.from || !dateRange?.to) return;
-
     try {
       setIsLoading(true);
-
-      const since = format(dateRange.from, "yyyy-MM-dd");
-      const until = format(dateRange.to, "yyyy-MM-dd");
-
-      // Aqui enviamos `comment`, `groupedData`, `since` e `until` para o back-end
       const snapshotBody = {
         groupedData,
         comment,
-        since,
-        until,
+        since: format(dateRange.from, "yyyy-MM-dd"),
+        until: format(dateRange.to, "yyyy-MM-dd"),
       };
-      const response = await SnapshotService.createSnapshot(snapshotBody);
-
-      // Fechamos o popover e limpamos o comentário
+      const res = await SnapshotService.createSnapshot(snapshotBody);
       setOpenSnapshotPopover(false);
       setComment("");
-
-      // Redireciona para a página do snapshot se tudo der certo
-      if (response && response.slug) {
-        router.push(`/snapshot/${response.slug}`);
-      }
-    } catch (error) {
-      console.error("Erro ao criar snapshot:", error);
+      if (res?.slug) router.push(`/snapshot/${res.slug}`);
+    } catch (err) {
+      console.error("Erro ao criar snapshot:", err);
     } finally {
       setIsLoading(false);
     }
   }
 
+  /* --------------------------------------------------
+   * render
+   * ------------------------------------------------*/
   return (
-    <div className="w-full h-full max-w-screen-xl mx-auto flex flex-col justify-around gap-6 mt-6 mb-6">
-      <div className="flex my-auto justify-between">
-        <div className="flex gap-2">
-          <img src="fire.gif" alt="fire" className="w-10" />
-          <h1 className="text-3xl font-bold text-center my-auto">Top Criativos - Vendas</h1>
+    <div className="w-full h-full max-w-screen-xl mx-auto flex flex-col gap-6 mt-6 mb-6">
+      {/* ---------- título + snapshot ---------- */}
+      <div className="flex justify-between">
+        <div className="flex gap-2 flex-col">
+          {/* <img src="/fire.gif" alt="fire" className="w-10" /> */}
+          <h1 className="text-3xl font-bold my-auto">
+            Top criativos - Vendas
+          </h1>
+          <p> {currentPageConfig ? currentPageConfig.description : ""}</p>
         </div>
 
-        {/* POPUP DE CRIAR SNAPSHOT */}
         <Popover open={openSnapshotPopover} onOpenChange={setOpenSnapshotPopover}>
           <PopoverTrigger asChild>
             <Button
-              disabled={isLoading || !groupedData || groupedData.length === 0}
+              disabled={isLoading || !groupedData?.length}
               onClick={handleOpenSnapshotPopover}
             >
               Criar Snapshot
             </Button>
           </PopoverTrigger>
-
           <PopoverContent side="bottom" align="end" className="w-64 p-4 flex flex-col space-y-4">
             <span className="font-semibold text-sm">Adicionar comentário</span>
             <Textarea
@@ -210,102 +263,85 @@ export default function TopCriativosVendasPage() {
               onChange={(e) => setComment(e.target.value)}
             />
             <Button onClick={handleGenerateSnapshotLink} disabled={isLoading || !comment}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Gerar link
             </Button>
           </PopoverContent>
         </Popover>
       </div>
-
-      <FilterBarComponent>
-        <SelectGeneric
-          label="Agrupar por"
-          placeholder="Agrupar por"
-          defaultValue="criativo"
-          items={[{ value: "criativo", label: "Criativos" }]}
-          className="w-[140px]"
-        />
+      <div className="flex w-full gap-2">
         <DatePickerWithRange value={dateRange} onChange={onDateRangeApply} />
+        <SelectGeneric
+          label="Ordenar por"
+          icon={<ArrowDownUp className="h-4 w-4" />}
+          placeholder="Métrica"
+          value={sorted}
+          items={metricsOrder.map((m) => ({ value: m, label: METRIC_MAP[m].label }))}
+          onValueChange={(val) =>
+            updateListFilters({ sorted: val as MetricKey })
+          }
+          className="w-[200px]"
+        />
+      </div>
+        
+      <FilterBarComponent>
+        <MetricChipsBar
+          value={metricsOrder}
+          onChange={(order) => updateListFilters({ metricsOrder: order })}
+          maxItems={6}
+          minItems={1}
+        />
       </FilterBarComponent>
 
-      <div className="max-w-[100%] h-full flex">
+      {/* ---------- cards ---------- */}
+      <div className="flex-1">
         {isLoading ? (
-          <div className="m-auto h-full my-auto flex items-center">
+          <div className="h-full flex items-center justify-center">
             <Loader2 className="animate-spin" />
           </div>
-        ) : groupedData && groupedData.length > 0 ? (
-          <div className="grid sm:grid-cols-1 mx-auto md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        ) : !groupedData?.length ? (
+          <div className="h-full flex items-center justify-center">Nenhum dado encontrado</div>
+        ) : (
+          <div className="grid mx-auto gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {groupedData.map((group) => {
-              const firstAd = group.ads[0];
               const creative = group.creative;
               const poster =
                 creative.object_story_spec?.video_data?.image_url ||
                 creative.image_url ||
                 creative.thumbnail_url;
               const mediaType = creative.object_story_spec?.video_data?.image_url ? "VIDEO" : "IMAGE";
-              const title = firstAd.name || creative.id;
+              const title = group.ads[0]?.name || creative.id;
+
+              // monta métricas conforme ordem escolhida
+              const metrics = metricsOrder.map((id) => {
+                const def = METRIC_MAP[id];
+                return {
+                  label: def.label,
+                  value: def.value(group.aggregatedInsights),
+                  difference: def.diff(group.aggregatedInsights),
+                  invert: def.invert,
+                };
+              });
 
               return (
-                <div key={creative.id}>
-                  <CardAdComponent
-                    title={title}
-                    thumbUrl={poster || "/teste.jpg"}
-                    mediaType={mediaType}
-                    metrics={[
-                      {
-                        label: 'Tumbstop',
-                        value: formatPercent(group.aggregatedInsights.tumbstock),
-                        difference: formatPercent(group.aggregatedInsights.diff.tumbstock), 
-                      },
-                      {
-                        label: 'CTR (link click)',
-                        value: formatPercent(group.aggregatedInsights.ctrLinkClick),
-                        difference: formatPercent(group.aggregatedInsights.diff.ctrLinkClick), 
-                      },
-                      {
-                        label: 'Custo por Compra Site',
-                        value: formatCurrency(group.aggregatedInsights.costSitePurchase),
-                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.costSitePurchase) : undefined, 
-                        invert: true,
-                      },
-                      {
-                        label: 'Compras',
-                        value: formatNumber(group.aggregatedInsights.actions.purchase),
-                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.purchase) : undefined, 
-                      },
-                      {
-                        label: 'Click to purchase',
-                        value: formatPercent(group.aggregatedInsights.clickToPurchase),
-                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.clickToPurchase) : undefined, 
-                      },
-                      {
-                        label: 'ROAS',
-                        value: formatNumber(group.aggregatedInsights.roasCustom, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }),
-                        difference: group.aggregatedInsights.actions.purchase > 0 ? formatPercent(group.aggregatedInsights.diff.roasCustom) : undefined, 
-                      },
-                    ]}
-                    onCardClick={() => {
-                      const videoId = creative.object_story_spec?.video_data?.video_id;
-                      if (videoId) {
-                        searchVideoCreative(videoId, poster, title);
-                      }
-                    }}
-                  />
-                </div>
+                <CardAdComponent
+                  key={creative.id}
+                  title={title}
+                  thumbUrl={poster || "/placeholder.jpg"}
+                  mediaType={mediaType}
+                  metrics={metrics}
+                  onCardClick={() => {
+                    const videoId = creative.object_story_spec?.video_data?.video_id;
+                    if (videoId) searchVideoCreative(videoId, poster, title);
+                  }}
+                />
               );
             })}
-          </div>
-        ) : (
-          <div className="m-auto h-full my-auto flex items-center">
-            Nenhum dado encontrado
           </div>
         )}
       </div>
 
-      {/* COMPONENTE FLUTUANTE NO CANTO INFERIOR DIREITO */}
+      {/* ---------- vídeo flutuante ---------- */}
       <FloatingVideoCard
         open={openVideoCard}
         onOpenChange={setOpenVideoCard}
@@ -316,3 +352,5 @@ export default function TopCriativosVendasPage() {
     </div>
   );
 }
+
+

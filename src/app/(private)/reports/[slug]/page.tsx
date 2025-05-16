@@ -77,7 +77,6 @@ export default function CustomPage() {
   /* ---------------- estados principais -------------- */
   const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [orderMetric, setOrderMetric] = useState<MetricKey>("tumbstock");
 
   /* ---------------- snapshot ------------------------ */
   const [openSnapshotPopover, setOpenSnapshotPopover] = useState(false);
@@ -94,7 +93,6 @@ export default function CustomPage() {
     (async () => {
       try {
         const resp = await ReportService.findBySlug(slug);
-        // setReport(resp);
         setCurrentPageConfig({
           listFilters: {
             metricsOrder: resp.metricsOrder ?? DEFAULT_FILTERS.metricsOrder,
