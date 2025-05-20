@@ -190,6 +190,7 @@ export function sortGroupsByMetric(
     "purchaseRoas",
     "roasCustom",
     "landingPageViews",
+    "purchase"
   ] as const;
 
   const avg: Record<string, number> = Object.fromEntries(

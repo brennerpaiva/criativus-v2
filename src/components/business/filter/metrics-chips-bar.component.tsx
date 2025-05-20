@@ -82,6 +82,7 @@ export const METRIC_OPTIONS: MetricOption[] = [
   { key: "purchaseRoas", label: "Purchase ROAS" },
   { key: "roasCustom", label: "ROAS Custom" },
   { key: "landingPageViews", label: "Landing Page Views" },
+  { key: "purchase", label: "Compras" },
 ];
 
 /* lookup rápido */
