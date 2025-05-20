@@ -36,7 +36,6 @@ const BASE_NAV = [
     isActive: true,
     items: [
       { title: "Vendas", url: "/top-criativos-vendas" },
-      { title: "Visitas", url: "/top-criativos-visitas" },
       { title: "Custom", url: "/custom" },
     ],
   },
@@ -86,7 +85,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       icon: SquareTerminal,
       items: [
         { title: "Vendas", url: "/top-criativos-vendas" },
-        { title: "Visitas", url: "/top-criativos-visitas" },
       ],
     },
     {
