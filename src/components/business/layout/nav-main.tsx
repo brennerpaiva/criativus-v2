@@ -32,7 +32,6 @@ type NavItem = {
 export function NavMain({ items }: { items: NavItem[] }) {
   // Pega a rota atual
   const pathname = usePathname()
-  console.log(pathname)
 
   return (
     <SidebarGroup>

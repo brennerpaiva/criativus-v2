@@ -54,7 +54,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { reports, loaded, setReports } = useReportStore();
   // Carrega relatórios se ainda não houver dados persistidos
   useEffect(() => {
-    console.log(reports.length);
     if (reports.length > 0 || loaded) return;
     if (!loaded) return;
     (async () => {

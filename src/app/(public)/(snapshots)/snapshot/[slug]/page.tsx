@@ -59,7 +59,6 @@ export default function SnapshotPage() {
   }
 
   async function searchVideoCreative(videoId: string, posterUrl?: string, adTitle?: string) {
-    console.log(posterUrl)
     try {
       const response = await FacebookAdsService.getVideoCreative(videoId);
       if (response?.source) {
