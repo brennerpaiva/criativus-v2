@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [adAccounts, setAdAccounts] = useState<AdAccount[] | null>(null);
   const [activeAdAccount, setActiveAdAccount] = useState<AdAccount | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const { setReports, reports } = useReportStore();
 
   const authService = new AuthService();
 
@@ -95,6 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Erro ao buscar contas de anúncio:', error);
     }
   }, [activeAdAccount]); // Adicione activeAdAccount como dependência
+
+  const findReports= useCallback(async () => {
+    try {
+      const reportsUser = await ReportService.listReports() || [];
+      setReports(reportsUser);
+    } catch (error) {
+      console.error('Erro ao buscar reports do usuário:', error);
+    }
+  }, [setReports]);
   
   // Função de login padrão (ex.: com formulário)
   const login = useCallback(async (formData: any) => {
@@ -114,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(profile);
       
       if (profile.accessTokenFb) {
+        await findReports();
         await findAdAccounts();
       } else {
         return await loginWithFacebook();
