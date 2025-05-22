@@ -2,6 +2,8 @@
 
 import AuthService from '@/service/auth.service';
 import FacebookAdsService from '@/service/graph-api.service';
+import ReportService from '@/service/report.service';
+import { useReportStore } from '@/store/report/user-report.store';
 import { userModel } from '@/types/model/user.model';
 import { useRouter } from 'next/navigation';
 import nookies from 'nookies';
@@ -148,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    router.push('/login');
     nookies.destroy(null, 'user');
     nookies.destroy(null, 'userToken');
     nookies.destroy(null, 'access_token');
@@ -157,7 +160,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserToken(null);
     setActiveAdAccount(null);
     setAdAccounts(null);
-    router.push('/login');
   }, [router]);
 
   const switchAdAccount = useCallback((adAccount: AdAccount) => {
