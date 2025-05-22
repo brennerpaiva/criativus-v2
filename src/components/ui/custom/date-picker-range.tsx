@@ -1,3 +1,10 @@
+/* ------------------------------------------------------------------
+ * src/components/ui/custom/date-picker-range.tsx
+ * ------------------------------------------------------------------
+ * Date-range picker com presets e suporte a “single-day range”.
+ * Se o usuário clicar apenas em uma data e escolher “Aplicar”,
+ * o componente envia { from, to } com o mesmo dia.
+ * ----------------------------------------------------------------*/
 "use client";
 
 import {
@@ -115,14 +122,23 @@ export function DatePickerWithRange({ value, onChange, className }: Props) {
   }
 
   /* ---------------- handlers --------------------------------------- */
-  const handlePresetRange = (key: PresetKey) => setTempRange(getPresetRange(key));
+  // Se o usuário escolher apenas um dia, duplica-se em to.
+  const normalizeRange = (r?: DateRange): DateRange | undefined =>
+    r?.from && !r?.to ? { from: r.from, to: r.from } : r;
+
+  const handlePresetRange = (key: PresetKey) =>
+    setTempRange(getPresetRange(key));
 
   const handleApply = () => {
-    setSelectedRange(tempRange);
+    const normalized = normalizeRange(tempRange);
+
+    setSelectedRange(normalized);
+    setTempRange(normalized);
     setOpen(false);
+
     onChange?.(
-      tempRange
-        ? { from: toYMD(tempRange.from), to: toYMD(tempRange.to) }
+      normalized
+        ? { from: toYMD(normalized.from), to: toYMD(normalized.to) }
         : undefined,
     );
   };
@@ -146,9 +162,9 @@ export function DatePickerWithRange({ value, onChange, className }: Props) {
     return `${fromStr} - ${toStr}`;
   }, [selectedRange]);
 
-  /* ------------------------------------------------------------------ */
-  /* Render                                                             */
-  /* ------------------------------------------------------------------ */
+  /* ------------------------------------------------------------------
+   * Render
+   * ----------------------------------------------------------------*/
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
