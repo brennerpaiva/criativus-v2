@@ -1,7 +1,7 @@
 "use client";
 
+import { SimpleRange } from "@/components/ui/custom/date-picker-range";
 import { MetricKey } from "@/constants/metric";
-import { DateRange } from "react-day-picker";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -11,7 +11,7 @@ import { persist } from "zustand/middleware";
 export interface ListFiltersPageConfig {
   metricsOrder?: MetricKey[];
   sorted?: MetricKey;
-  dateRange?: DateRange;
+  dateRange?: SimpleRange;
 }
 
 export interface PageConfig {
@@ -29,7 +29,7 @@ interface PageConfigState {
   loaded: boolean;
 
   /* actions */
-  setCurrentPageConfig: (config: PageConfig) => void;
+  setCurrentPageConfig: (config: PageConfig | null) => void;
   updateListFilters: (filters: Partial<ListFiltersPageConfig>) => void;
   resetPageConfig: () => void;
 }

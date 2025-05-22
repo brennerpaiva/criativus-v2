@@ -6,7 +6,7 @@
 "use client";
 
 import { MetricKey } from "@/constants/metric";
-import { DateRange } from "react-day-picker";
+import { ReportModel } from "@/types/model/report.model";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -19,22 +19,23 @@ export interface ReportInfo {
   name: string;
   slug: string;
   metricsOrder?: MetricKey[];   //  ⬅️  "?"
-  sorted?:  MetricKey;
-  dateRange?:   DateRange;
+  sorted?: MetricKey;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 interface ReportState {
   /* dados */
-  reports: ReportInfo[];
+  reports: ReportModel[];
 
   /* flags */
   loaded: boolean;
 
   /* actions */
-  setReports:        (list: ReportInfo[]) => void;
-  addReport:         (r: ReportInfo) => void;
+  setReports:        (list: ReportModel[]) => void;
+  addReport:         (r: ReportModel) => void;
   removeReport:      (slug: string) => void;
-  findReportBySlug:  (slug: string) => ReportInfo | undefined;
+  findReportBySlug:  (slug: string) => ReportModel | undefined;
 }
 
 /* ────────────────────────────────────────────────
@@ -46,9 +47,9 @@ export const useReportStore = create<ReportState>()(
       reports: [],
       loaded: false,
       setReports: (list) => {
-        if (!get().loaded) {
+        
           set({ reports: list, loaded: true });
-        }
+
       },
       addReport: (r) => set((st) => ({ reports: [...st.reports, r] })),
       removeReport: (slug) =>

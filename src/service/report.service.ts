@@ -1,7 +1,7 @@
 import { CreateReportDto } from "@/types/dto/report/create-report.dto";
+import { UpdateReportDto } from "@/types/dto/report/update-report.dto";
 import { ReportModel } from "@/types/model/report.model";
 import apiClient from "./api-cliente.service";
-import { UpdateReportDto } from "@/types/dto/report/update-report.dto";
 
 
 const ReportService = {
@@ -20,8 +20,8 @@ const ReportService = {
     return response.data;
   },
 
-  async updateReportBySlug(updateReportDto: UpdateReportDto, slug: string): Promise<ReportModel> {
-    const response = await apiClient.put<ReportModel>(`/reports/${slug}`, updateReportDto);
+  async updateReportBySlug(updateReportDto: UpdateReportDto, slug: string): Promise<ReportModel[]> {
+    const response = await apiClient.put<ReportModel[]>(`/reports/${slug}`, updateReportDto);
     return response.data;
   },
   
