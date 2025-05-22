@@ -55,7 +55,6 @@ export function SidebarUserComponent() {
   ];
 
   const handleSelect = (item: ComboboxItem) => {
-    // console.log('Selected item:', item);
   };
 
   return (

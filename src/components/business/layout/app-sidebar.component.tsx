@@ -58,18 +58,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     (async () => {
       try {
         const apiReports = await ReportService.listReports();
-        setReports(
-          apiReports.map(report => ({
-            id: report.id,
-            name: report.name,
-            slug: report.slug,
-            metricsOrder: report.metricsOrder ?? undefined,
-            sorted: report.sorted ?? undefined,
-            dateRange: report.dateStart && report.dateEnd
-              ? { from: new Date(report.dateStart), to: new Date(report.dateEnd) }
-              : undefined,
-          }))
-        );
+        setReports(apiReports)
       } catch (err) {
         console.error(err);
         alert("Erro ao listar relatórios");

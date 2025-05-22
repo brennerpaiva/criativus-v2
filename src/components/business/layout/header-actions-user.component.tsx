@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------
  * src/components/business/layout/header-actions-user.component.tsx
  * ------------------------------------------------------------------
- * Exibe o nome do relatório e o botão “Excluir” **apenas** se
+ * Exibe o nome do relatório e o botão "Excluir" **apenas** se
  * o slug presente na URL existir no array `reports` do contexto.
  * ----------------------------------------------------------------*/
 "use client";
@@ -9,24 +9,27 @@
 import { Button } from "@/components/ui/button";
 import ReportService from "@/service/report.service";
 import { ListFiltersPageConfig, usePageConfigStore } from "@/store/report/collection.store";
-import { ReportInfo, useReportStore } from "@/store/report/user-report.store";
+import { useReportStore } from "@/store/report/user-report.store";
+import { ReportModel } from "@/types/model/report.model";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function HeaderActions() {
   const router = useRouter();
-  const { findReportBySlug, removeReport } = useReportStore();
+  const { findReportBySlug, removeReport, setReports, reports } = useReportStore();
   const currentPageConfig = usePageConfigStore((state) => state.currentPageConfig);
   const [disabledSaveButton, setDisabledSaveButton] = useState<boolean>(true);
   const [hiddeButtons, setHiddeButtons] = useState<boolean>(true);
 
   useEffect(() => {
     if (!currentPageConfig?.slug || !currentPageConfig?.listFilters) {
+      setHiddeButtons(true);
       return
     }
     const reportMatch = findReportBySlug(currentPageConfig.slug);
     if (!reportMatch) {
+      setHiddeButtons(true);
       return;
     }
     setHiddeButtons(false);
@@ -35,11 +38,11 @@ export function HeaderActions() {
       reportMatch
     );
     setDisabledSaveButton(!isDifferent);
-  }, [currentPageConfig, findReportBySlug]);
+  }, [currentPageConfig, findReportBySlug, reports]);
 
   const handleDelete = async () => {
     if (!currentPageConfig?.slug) return;
-    if (!confirm(`Excluir o relatório \"${currentPageConfig.name}\" permanentemente?`)) return;
+    if (!confirm(`Excluir o relatório "${currentPageConfig.name}" permanentemente?`)) return;
 
     try {
       await ReportService.deleteReportBySlug(currentPageConfig.slug);
@@ -52,14 +55,15 @@ export function HeaderActions() {
 
   const handleSave = async () => {
     if (!currentPageConfig?.slug || !currentPageConfig?.listFilters) return;
-    if (!confirm(`Salvar o relatório \"${currentPageConfig.name}\" permanentemente?`)) return;
-
+    if (!confirm(`Salvar o relatório "${currentPageConfig.name}" permanentemente?`)) return;
     try {
       const response = await ReportService.updateReportBySlug(
         currentPageConfig.listFilters,
         currentPageConfig.slug
       );
-      alert(response);
+      setReports(response);
+
+      alert('Relatório atualizado.');
     } catch {
       alert("Erro ao salvar relatório");
     }
@@ -67,20 +71,31 @@ export function HeaderActions() {
 
   function checkDifferencesFiltersReports(
     currentFilters: ListFiltersPageConfig,
-    reportMatch?: ReportInfo
+    reportMatch?: ReportModel
   ): boolean {
-    if (!reportMatch) return true;
+
+    if (!reportMatch) {
+      return true;
+    }
 
     const currentMetricsOrder = currentFilters.metricsOrder || [];
     const reportMetricsOrder = reportMatch.metricsOrder || [];
 
-    if (currentMetricsOrder.length !== reportMetricsOrder.length) return true;
-    if (!currentMetricsOrder.every((m, i) => m === reportMetricsOrder[i])) return true;
+    if (currentMetricsOrder.length !== reportMetricsOrder.length) {
+      return true;
+    }
+    if (!currentMetricsOrder.every((m, i) => m === reportMetricsOrder[i])) {
+      return true;
+    }
 
-    if (currentFilters.sorted !== reportMatch.sorted) return true;
+    if (currentFilters.sorted !== reportMatch.sorted) {
+      return true;
+    }
 
     const { dateRange: currentDateRange } = currentFilters;
-    const { dateRange: reportDateRange } = reportMatch;
+    const reportDateRange = reportMatch.dateStart && reportMatch.dateEnd 
+      ? { from: new Date(reportMatch.dateStart), to: new Date(reportMatch.dateEnd) }
+      : undefined;
 
     if (!currentDateRange || !reportDateRange) {
       return currentDateRange !== reportDateRange;
@@ -100,7 +115,7 @@ export function HeaderActions() {
       if (currentFrom.getTime() !== reportFrom.getTime() || currentTo.getTime() !== reportTo.getTime()) {
         return true;
       }
-    } catch {
+    } catch (error) {
       return true;
     }
 
@@ -120,7 +135,7 @@ export function HeaderActions() {
             Salvar
           </Button>
           <Button variant="outline" size="sm" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-1" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </>
       )}
