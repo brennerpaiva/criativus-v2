@@ -2,6 +2,7 @@
 
 import { SignInFormComponent } from "@/components/business/forms/sign-in-form.component";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import ImageBanner from '/public/teste.jpg';
 
@@ -34,9 +35,9 @@ export default function SignInPage() {
           <SignInFormComponent />
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{' '}
-            <a href="/sign-up" className="underline">
+            <Link href="/sign-up" className="underline">
               Crie sua conta
-            </a>
+            </Link>
           </div>
         </div>
       </div>

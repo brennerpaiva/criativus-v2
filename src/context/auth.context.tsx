@@ -150,16 +150,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    router.push('/login');
-    nookies.destroy(null, 'user');
-    nookies.destroy(null, 'userToken');
-    nookies.destroy(null, 'access_token');
-    nookies.destroy(null, 'activeAdAccount');
-    nookies.destroy(null, 'adAccounts');
-    setUser(null);
-    setUserToken(null);
-    setActiveAdAccount(null);
-    setAdAccounts(null);
+    router.push('/sign-in');
+    const cookies = nookies.get(null);
+    Object.keys(cookies).forEach(cookieName => {
+      nookies.destroy(null, cookieName);
+    });
+    localStorage.clear();
+    sessionStorage.clear();
   }, [router]);
 
   const switchAdAccount = useCallback((adAccount: AdAccount) => {
