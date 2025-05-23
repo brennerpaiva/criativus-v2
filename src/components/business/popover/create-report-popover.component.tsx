@@ -20,6 +20,7 @@ import { useReportStore } from "@/store/report/user-report.store";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+
 export function CreateReportPopover() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -39,7 +40,14 @@ export function CreateReportPopover() {
       const report = await ReportService.createReport(payload); // { id, name, slug, ... }
 
       /* grava no estado global → sidebar atualiza instantaneamente */
-      addReport({ id: report.id, name: report.name, slug: report.slug });
+      addReport({
+        id: report?.id,
+        name: report?.name,
+        slug: report?.slug,
+        userId: report?.userId,
+        user: report?.user,
+        createdAt: report?.createdAt
+      });
 
       setOpen(false);
       router.push(`/reports/${report.slug}`);
