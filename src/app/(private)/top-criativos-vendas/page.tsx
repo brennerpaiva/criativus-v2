@@ -281,7 +281,7 @@ export default function CustomPage() {
         >
           <PopoverTrigger asChild>
             <Button
-              disabled={isLoading || !groupedData?.length}
+              disabled={true}
               onClick={handleOpenSnapshotPopover}
             >
               Criar Snapshot
