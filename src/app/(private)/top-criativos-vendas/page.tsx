@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------ */
+/* src/app/(private)/top-criativos-vendas/page.tsx                    */
+/* ------------------------------------------------------------------ */
 "use client";
 
 import { CardAdComponent } from "@/components/business/cards/card-creative.component";
@@ -27,11 +30,8 @@ import {
   groupAdsByCreative,
   sortGroupsByMetric,
 } from "@/utils/creative.util";
-import {
-  format,
-  isValid,
-  parse,
-} from "date-fns";
+
+import { format, isValid, parse } from "date-fns";
 import { ArrowDownUp, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -67,6 +67,15 @@ const DEFAULT_FILTERS = {
   dateRange: buildDefaultDateRange(),
 };
 
+const DEFAULT_PAGE_CONFIG = {
+  listFilters: DEFAULT_FILTERS,
+  name: "Top Criativos - Vendas",
+  description: "",
+  icon: "",
+  slug: undefined,
+  id: undefined,
+};
+
 /* ------------------------------------------------------------------ */
 /* Componente                                                          */
 /* ------------------------------------------------------------------ */
@@ -74,14 +83,23 @@ export default function CustomPage() {
   const router = useRouter();
   const { activeAdAccount } = useAuth();
 
-  /* store */
-  const setCurrentPageConfig = usePageConfigStore(
-    (s) => s.setCurrentPageConfig,
-  );
-  const updateListFilters = usePageConfigStore((s) => s.updateListFilters);
-  const currentPageConfig = usePageConfigStore((s) => s.currentPageConfig);
+  /* -------- store (TODOS os hooks sempre executam) -------- */
+  const {
+    hasHydrated,
+    currentPageConfig,
+    setCurrentPageConfig,
+    updateListFilters,
+  } = usePageConfigStore();
 
-  /* filtros */
+  /* garante configuração padrão assim que hidratar */
+  useEffect(() => {
+    setCurrentPageConfig(DEFAULT_PAGE_CONFIG);
+    if (hasHydrated && !currentPageConfig) {
+      setCurrentPageConfig(DEFAULT_PAGE_CONFIG);
+    }
+  }, [hasHydrated, currentPageConfig, setCurrentPageConfig]);
+
+  /* -------- filtros derivados -------- */
   const listFilters = currentPageConfig?.listFilters ?? DEFAULT_FILTERS;
   const metricsOrder = listFilters.metricsOrder ?? [];
   const sorted = listFilters.sorted ?? "tumbstock";
@@ -90,7 +108,7 @@ export default function CustomPage() {
     [listFilters.dateRange],
   );
 
-  /* estados */
+  /* -------- estados locais -------- */
   const [groupedData, setGroupedData] = useState<CreativeGroup[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [openSnapshotPopover, setOpenSnapshotPopover] = useState(false);
@@ -99,48 +117,46 @@ export default function CustomPage() {
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>();
   const [selectedVideoPoster, setSelectedVideoPoster] = useState<string>();
   const [selectedAdTitle, setSelectedAdTitle] = useState<string>("");
-  const [notFoundPage, setNotFoundPage] = useState<boolean>(false);
 
   /* ------------------------------------------------------------------
    * efeitos
    * ----------------------------------------------------------------*/
-  /* carrega config do relatório */
-  useEffect(() => {
-    setCurrentPageConfig({
-      listFilters: {
-        metricsOrder: DEFAULT_FILTERS.metricsOrder,
-        sorted: DEFAULT_FILTERS.sorted,
-        dateRange: DEFAULT_FILTERS.dateRange,
-      },
-      name: "Top Criativos - Vendas",
-      description: "",
-      icon: "",
-      slug: undefined,
-      id: undefined,
-    });
-    setNotFoundPage(false);
-  }, []);
-
-  /* busca dados quando troca conta */
+  /* busca dados ao trocar conta */
   useEffect(() => {
     const dates = ensureDateObjects(dateRange);
     if (activeAdAccount && dates) fetchData(dates);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAdAccount]);
 
+  /* reordena quando sorted muda */
+  useEffect(() => {
+    if (!groupedData) return;
+    setGroupedData((prev) =>
+      prev
+        ? sortGroupsByMetric(
+            Object.fromEntries(prev.map((g) => [g.creative.id, g])),
+            sorted,
+          )
+        : prev,
+    );
+  }, [sorted]);
+
+  /* mantém sorted válido */
+  useEffect(() => {
+    if (metricsOrder.length && !metricsOrder.includes(sorted)) {
+      updateListFilters({ sorted: metricsOrder[0] });
+    }
+  }, [metricsOrder, sorted, updateListFilters]);
+
   /* ------------------------------------------------------------------
    * handlers
    * ----------------------------------------------------------------*/
   async function onDateRangeApply(newRange: SimpleRange | undefined) {
     if (!newRange) return;
-    
-    // If only one date is selected, use it for both from and to
-    if (newRange.from && !newRange.to) {
-      newRange.to = newRange.from;
-    } else if (!newRange.from && newRange.to) {
-      newRange.from = newRange.to;
-    }
-    
+
+    if (newRange.from && !newRange.to) newRange.to = newRange.from;
+    else if (!newRange.from && newRange.to) newRange.from = newRange.to;
+
     updateListFilters({ dateRange: newRange });
     const dates = ensureDateObjects(newRange);
     if (dates && activeAdAccount) await fetchData(dates);
@@ -160,7 +176,7 @@ export default function CustomPage() {
   }
 
   async function fetchData(range: { from: Date; to: Date }) {
-    if (!isValid(range.from) || !isValid(range.to)) return; // ← evita RangeError
+    if (!isValid(range.from) || !isValid(range.to)) return;
     try {
       setIsLoading(true);
       const since = format(range.from, "yyyy-MM-dd");
@@ -188,27 +204,6 @@ export default function CustomPage() {
     }
   }
 
-  /* reordena quando sorted muda */
-  useEffect(() => {
-    if (!groupedData) return;
-    setGroupedData((prev) =>
-      prev
-        ? sortGroupsByMetric(
-            Object.fromEntries(prev.map((g) => [g.creative.id, g])),
-            sorted,
-          )
-        : prev,
-    );
-  }, [sorted]);
-
-  /* mantém sorted válido */
-  useEffect(() => {
-    if (metricsOrder.length && !metricsOrder.includes(sorted)) {
-      updateListFilters({ sorted: metricsOrder[0] });
-    }
-  }, [metricsOrder, sorted]);
-
-  /* UI helpers */
   function handleOpenVideoCard(
     videoUrl?: string,
     posterUrl?: string,
@@ -219,11 +214,6 @@ export default function CustomPage() {
     setSelectedVideoPoster(posterUrl);
     setSelectedAdTitle(title || "Anúncio");
     setOpenVideoCard(true);
-  }
-
-  function handleOpenSnapshotPopover() {
-    if (!groupedData?.length) return;
-    setOpenSnapshotPopover(true);
   }
 
   async function handleGenerateSnapshotLink() {
@@ -248,18 +238,14 @@ export default function CustomPage() {
     }
   }
 
-
-  /* ------------------------------------------------------------------ */
-  /* render                                                             */
-  /* ------------------------------------------------------------------ */
-  if (notFoundPage) {
+  /* ------------------------------------------------------------------
+   * render
+   * ----------------------------------------------------------------*/
+  const ready = hasHydrated && currentPageConfig;
+  if (!ready) {
     return (
-      <div className="w-full h-full max-w-screen-xl mx-auto flex flex-col items-center justify-center gap-6 mt-6 mb-6">
-        <h1 className="text-3xl font-bold">Relatório não encontrado</h1>
-        <p className="text-muted-foreground">O relatório que você está procurando não existe ou foi removido.</p>
-        <Button onClick={() => router.push('/top-criativos-vendas')}>
-          Voltar para relatórios
-        </Button>
+      <div className="h-full w-full flex items-center justify-center">
+        <Loader2 className="animate-spin" />
       </div>
     );
   }
@@ -269,9 +255,7 @@ export default function CustomPage() {
       {/* título + snapshot */}
       <div className="flex justify-between">
         <div className="flex gap-2 flex-col">
-          <h1 className="text-3xl font-bold">
-            {"Top Criativos - Vendas"}
-          </h1>
+          <h1 className="text-3xl font-bold">Top Criativos - Vendas</h1>
           <p>{currentPageConfig?.description ?? ""}</p>
         </div>
 
@@ -280,10 +264,7 @@ export default function CustomPage() {
           onOpenChange={setOpenSnapshotPopover}
         >
           <PopoverTrigger asChild>
-            <Button
-              disabled={true}
-              onClick={handleOpenSnapshotPopover}
-            >
+            <Button disabled onClick={() => {}}>
               Criar Snapshot
             </Button>
           </PopoverTrigger>
@@ -302,16 +283,14 @@ export default function CustomPage() {
               onClick={handleGenerateSnapshotLink}
               disabled={isLoading || !comment}
             >
-              {isLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Gerar link
             </Button>
           </PopoverContent>
         </Popover>
       </div>
 
-      {/* filtros (data + métrica) */}
+      {/* filtros */}
       <div className="flex w-full gap-2">
         <DatePickerWithRange value={dateRange} onChange={onDateRangeApply} />
         <SelectGeneric
@@ -330,13 +309,11 @@ export default function CustomPage() {
         />
       </div>
 
-      {/* chips de métricas */}
+      {/* chips */}
       <FilterBarComponent>
         <MetricChipsBar
           value={metricsOrder}
-          onChange={(order) =>
-            updateListFilters({ metricsOrder: order })
-          }
+          onChange={(order) => updateListFilters({ metricsOrder: order })}
           maxItems={6}
           minItems={1}
         />
@@ -360,10 +337,9 @@ export default function CustomPage() {
                 creative.object_story_spec?.video_data?.image_url ||
                 creative.image_url ||
                 creative.thumbnail_url;
-              const mediaType =
-                creative.object_story_spec?.video_data?.image_url
-                  ? "VIDEO"
-                  : "IMAGE";
+              const mediaType = creative.object_story_spec?.video_data?.image_url
+                ? "VIDEO"
+                : "IMAGE";
               const title = group.ads[0]?.name || creative.id;
 
               const metrics = metricsOrder.map((id) => {

@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------ */
+/* src/store/report/collection.store.ts                               */
+/* ------------------------------------------------------------------ */
 "use client";
 
 import { SimpleRange } from "@/components/ui/custom/date-picker-range";
@@ -24,11 +27,8 @@ export interface PageConfig {
 }
 
 interface PageConfigState {
-  /* dados */
   currentPageConfig: PageConfig | null;
-  loaded: boolean;
-
-  /* actions */
+  hasHydrated: boolean;                        // ✅ indica quando terminou
   setCurrentPageConfig: (config: PageConfig | null) => void;
   updateListFilters: (filters: Partial<ListFiltersPageConfig>) => void;
   resetPageConfig: () => void;
@@ -39,42 +39,54 @@ interface PageConfigState {
  * ────────────────────────────────────────────────*/
 export const usePageConfigStore = create<PageConfigState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       currentPageConfig: null,
-      loaded: false,
+      hasHydrated: false,
 
-      /* ---------- configuração da página ---------- */
-      setCurrentPageConfig: (config) => 
-        set({ currentPageConfig: config, loaded: true }),
+      setCurrentPageConfig: (config) =>
+        set({ currentPageConfig: config }),
 
       updateListFilters: (filters) =>
-        set((state) => {
-          if (!state.currentPageConfig) return state;
-          
-          return {
-            currentPageConfig: {
-              ...state.currentPageConfig,
-              listFilters: {
-                ...state.currentPageConfig.listFilters,
-                ...filters
+        set((state) =>
+          state.currentPageConfig
+            ? {
+                currentPageConfig: {
+                  ...state.currentPageConfig,
+                  listFilters: {
+                    ...state.currentPageConfig.listFilters,
+                    ...filters,
+                  },
+                },
               }
-            }
-          };
-        }),
+            : state,
+        ),
 
-      resetPageConfig: () => 
-        set({ currentPageConfig: null, loaded: false }),
+      resetPageConfig: () =>
+        set({ currentPageConfig: null }),
     }),
     {
       name: "page-config",
+
+      /* grava só o que interessa */
       partialize: (state) => ({
         currentPageConfig: state.currentPageConfig,
-        loaded: state.loaded,
       }),
+
+      /* MEMÓRIA vence DISCO */
+      merge: (persisted: any, current) => ({
+        ...current,          // ← valor definido antes da hidratação
+        ...persisted,        // ← valor que existia no localStorage
+      }),
+
+      /* marca quando concluiu a hidratação */
+      onRehydrateStorage: () => (state) => {
+        if(state)
+        state.hasHydrated = true;
+      },
     },
   ),
 );
 
-/* Helper para usar apenas o currentPageConfig */
+/* helper */
 export const useCurrentPageConfig = () =>
   usePageConfigStore((s) => s.currentPageConfig);
