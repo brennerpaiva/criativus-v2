@@ -130,7 +130,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await findAdAccounts();
       } else {
         return await loginWithFacebook();
-        
       }
       router.push('/top-criativos-vendas');
    

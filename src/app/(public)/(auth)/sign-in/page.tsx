@@ -39,6 +39,11 @@ export default function SignInPage() {
               Crie sua conta
             </Link>
           </div>
+          <div className="text-center text-sm">
+            <Link href="/privacy-policy" className="underline">
+            Políticas de privacidade
+            </Link>
+          </div>
         </div>
       </div>
       <div className="hidden bg-muted lg:block">
