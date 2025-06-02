@@ -136,33 +136,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [authService, findAdAccounts, router]);
 
   // Nova função para login com Facebook (redirecionamento)
-  const loginWithFacebook = useCallback(() => {
-    const FB_APP_ID      = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
-    const REDIRECT_URI   = "https://ads-analytics.vercel.app/login-facebook";
-    const state          = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
-  
-    const params = new URLSearchParams({
-      client_id: FB_APP_ID,
-      redirect_uri: REDIRECT_URI,
-      response_type: "code",
-      display: "popup",
-      state: crypto.randomUUID?.() ?? Math.random().toString(36).slice(2),
-      scope: [
-        "public_profile",
-        "email",
-        "pages_show_list",        // exibe a lista de Páginas
-        "pages_read_engagement",
-        "ads_read",               // relatórios de Ads
-        "ads_management"          // (opcional) gerenciar campanhas
-      ].join(","),
-    });
-    
-    window.open(
-      `https://www.facebook.com/v22.0/dialog/oauth?${params.toString()}`,
-      "fbAuth",
-      "popup=yes,width=600,height=700"
-    );
-    
+  const loginWithFacebook = useCallback( async () => {
+    const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
+    const SCOPES = process.env.NEXT_PUBLIC_FACEBOOK_SCOPES ?? "public_profile";
+    const NEST_CALLBACK_URL = process.env.NEXT_PUBLIC_FACEBOOK_REDIRECT_URI ?? "";
+    const authUrl = `https://www.facebook.com/v16.0/dialog/oauth` +
+      `?client_id=${FB_APP_ID}` +
+      `&redirect_uri=${encodeURIComponent(NEST_CALLBACK_URL)}` +
+      `&response_type=code`;
+    window.location.href = authUrl;
   }, []);
   
   
