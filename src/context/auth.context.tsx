@@ -138,14 +138,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Nova função para login com Facebook (redirecionamento)
   const loginWithFacebook = useCallback( async () => {
     const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
-    const SCOPES = process.env.NEXT_PUBLIC_FACEBOOK_SCOPES ?? "public_profile";
     const NEST_CALLBACK_URL = process.env.NEXT_PUBLIC_FACEBOOK_REDIRECT_URI ?? "";
-    const authUrl = `https://www.facebook.com/v16.0/dialog/oauth` +
-      `?client_id=${FB_APP_ID}` +
-      `&redirect_uri=${encodeURIComponent(NEST_CALLBACK_URL)}` +
-      `&scope=${encodeURIComponent(SCOPES)}` +
-      `&response_type=code`;
-    window.location.href = authUrl;
+    const SCOPE_CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID ?? "";
+    const params = new URLSearchParams({
+      client_id: FB_APP_ID,
+      redirect_uri: NEST_CALLBACK_URL,
+      response_type: "code",
+      config_id: SCOPE_CONFIG_ID,
+    });
+  
+    // Troque “v22.0” pela versão que preferir (ex.: v16.0)
+    window.location.href = `https://www.facebook.com/v22.0/dialog/oauth?${params.toString()}`;
   }, []);
 
   const logout = useCallback(() => {
