@@ -167,15 +167,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (response: fb.StatusResponse & { code?: string }) => {
         // IIFE para manter código assíncrono
         (async () => {
-    
           await findReports();
           await findAdAccounts();
           router.push('/top-criativos-vendas');
         })();
       },
       {
-        auth_type: "reauthenticate",
-        config_id: '1049856977152677',
+        // auth_type: "reauthenticate",
+        scope: "public_profile,email,ads_read",
+        config_id: "1049856977152677",
+        response_type: "code",
       },
     );
   }, [fbReady, authService, findAdAccounts, findReports, router]);
