@@ -173,8 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })();
       },
       {
-        // auth_type: "reauthenticate",
-        scope: "public_profile,email",
+        auth_type: "reauthenticate",
+        config_id: "1049856977152677",
+        response_type: "code",
       },
     );
   }, [fbReady, authService, findAdAccounts, findReports, router]);
