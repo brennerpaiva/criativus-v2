@@ -1,5 +1,6 @@
 'use client';
 
+import { useFacebookSdk } from '@/hooks/useFacebookSdk';
 import AuthService from '@/service/auth.service';
 import FacebookAdsService from '@/service/graph-api.service';
 import ReportService from '@/service/report.service';
@@ -7,7 +8,14 @@ import { useReportStore } from '@/store/report/user-report.store';
 import { userModel } from '@/types/model/user.model';
 import { useRouter } from 'next/navigation';
 import nookies from 'nookies';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 interface AdAccount {
   id: string;
@@ -38,13 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [adAccounts, setAdAccounts] = useState<AdAccount[] | null>(null);
   const [activeAdAccount, setActiveAdAccount] = useState<AdAccount | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const { setReports, reports } = useReportStore();
 
+  const { setReports } = useReportStore();
   const authService = new AuthService();
 
-  // Reidratação dos dados do usuário a partir dos cookies
+  /** ------------------------------------------------------------------
+   *  1. Hidratando cookies -> estado
+   * ------------------------------------------------------------------ */
   useEffect(() => {
     const cookies = nookies.get(null);
+
     if (cookies.user) {
       try {
         setUser(JSON.parse(cookies.user));
@@ -52,9 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao fazer parse do cookie 'user':", err);
       }
     }
-    if (cookies.userToken) {
-      setUserToken(cookies.userToken);
-    }
+
+    if (cookies.userToken) setUserToken(cookies.userToken);
+
     if (cookies.activeAdAccount) {
       try {
         setActiveAdAccount(JSON.parse(cookies.activeAdAccount));
@@ -62,112 +73,137 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Erro ao fazer parse do cookie 'activeAdAccount':", err);
       }
     }
-    setLoading(false);
-  }, []); // Remova [adAccounts]
 
+    setLoading(false);
+  }, []);
+
+  /** ------------------------------------------------------------------
+   *  2. Facebook Ad Accounts
+   * ------------------------------------------------------------------ */
   const findAdAccounts = useCallback(async () => {
     try {
-      const adAccountsUser = await FacebookAdsService.getAdAccounts();
-      const accounts = adAccountsUser || [];
+      const accounts = (await FacebookAdsService.getAdAccounts()) || [];
       setAdAccounts(accounts);
-  
-      // Recupera o activeAdAccount atual do estado ou do cookie
+
+      // Se não houver act-acct válido, assumir o primeiro
       const cookies = nookies.get(null);
-      let currentActiveAdAccount = activeAdAccount;
-      if (!currentActiveAdAccount && cookies.activeAdAccount) {
-        currentActiveAdAccount = JSON.parse(cookies.activeAdAccount);
-      }
-  
-      // Verifica se o activeAdAccount atual existe na nova lista de contas
-      const isValidActiveAdAccount = currentActiveAdAccount && accounts.some(
-        (account) => account.id === currentActiveAdAccount.id
-      );
-  
-      // Define o activeAdAccount apenas se não houver um válido
-      if (!isValidActiveAdAccount && accounts.length > 0) {
-        const firstAdAccount = accounts[0];
-        setActiveAdAccount(firstAdAccount);
-        nookies.set(null, 'activeAdAccount', JSON.stringify(firstAdAccount), {
+      const saved = cookies.activeAdAccount
+        ? JSON.parse(cookies.activeAdAccount)
+        : null;
+
+      const valid =
+        saved && accounts.some((acc) => acc.id === saved.id) ? saved : null;
+
+      const selected = valid ?? accounts[0] ?? null;
+      if (selected) {
+        setActiveAdAccount(selected);
+        nookies.set(null, 'activeAdAccount', JSON.stringify(selected), {
           maxAge: 60 * 60 * 24 * 365 * 10,
           path: '/',
         });
-      } else if (isValidActiveAdAccount) {
-        setActiveAdAccount(currentActiveAdAccount); // Mantém o existente
       }
     } catch (error) {
       console.error('Erro ao buscar contas de anúncio:', error);
     }
-  }, [activeAdAccount]); // Adicione activeAdAccount como dependência
+  }, []);
 
-  const findReports= useCallback(async () => {
+  /** ------------------------------------------------------------------
+   *  3. Reports
+   * ------------------------------------------------------------------ */
+  const findReports = useCallback(async () => {
     try {
-      const reportsUser = await ReportService.listReports() || [];
-      setReports(reportsUser);
+      const reports = (await ReportService.listReports()) || [];
+      setReports(reports);
     } catch (error) {
       console.error('Erro ao buscar reports do usuário:', error);
     }
   }, [setReports]);
-  
-  // Função de login padrão (ex.: com formulário)
-  const login = useCallback(async (formData: any) => {
-   
+
+  /** ------------------------------------------------------------------
+   *  4. Login tradicional (form + email/senha)
+   * ------------------------------------------------------------------ */
+  const login = useCallback(
+    async (formData: any) => {
+      // 4.1 Faz login na sua API
       const token = await authService.login(formData);
-      nookies.set(null, 'access_token', token, { 
+      nookies.set(null, 'access_token', token, {
         maxAge: 60 * 60 * 24 * 365 * 10,
-        path: '/' 
+        path: '/',
       });
       setUserToken(token);
-      
+
+      // 4.2 Carrega perfil
       const profile = await authService.getProfile();
-      nookies.set(null, 'user', JSON.stringify(profile), { 
+      nookies.set(null, 'user', JSON.stringify(profile), {
         maxAge: 60 * 60 * 24 * 365 * 10,
-        path: '/' 
+        path: '/',
       });
       setUser(profile);
-      
+
+      // 4.3 Se já tiver token do Facebook salvo → buscar dados,
+      //      senão, iniciar o login via Facebook
       if (profile.accessTokenFb) {
         await findReports();
         await findAdAccounts();
       } else {
-        return await loginWithFacebook();
+        loginWithFacebook();
+        return;
       }
+
       router.push('/top-criativos-vendas');
-   
-  }, [authService, findAdAccounts, router]);
+    },
+    [authService, findAdAccounts, findReports, router],
+  );
 
-  // Nova função para login com Facebook (redirecionamento)
-  const loginWithFacebook = useCallback( async () => {
-    const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
-    const SCOPES = "public_profile,business_management,pages_show_list";
-    const NEST_CALLBACK_URL = process.env.NEXT_PUBLIC_FACEBOOK_REDIRECT_URI ?? "";
-    const authUrl = `https://www.facebook.com/v16.0/dialog/oauth` +
-      `?client_id=${FB_APP_ID}` +
-      `&redirect_uri=${encodeURIComponent(NEST_CALLBACK_URL)}` +
-      `&scope=${encodeURIComponent(SCOPES)}` +
-      `&response_type=code`;
-    window.location.href = authUrl;
-  }, []);
-  
-  
+  /** ------------------------------------------------------------------
+   *  5. Login com Facebook — JavaScript SDK
+   * ------------------------------------------------------------------ */
+  const fbReady = useFacebookSdk();
 
+  const loginWithFacebook = useCallback(() => {
+    if (!fbReady) return; // SDK ainda não carregou
+
+    (window as any).FB.login(
+      async (
+        response: fb.StatusResponse & {
+          code?: string;
+        },
+      ) => {
+       console.log(response);
+      },
+      {
+        scope: 'ads_read,pages_read_engagement',
+        config_id: '1049856977152677',
+        response_type: 'code',
+      },
+    );
+  }, [fbReady, authService, findAdAccounts, findReports, router]);
+
+  /** ------------------------------------------------------------------
+   *  6. Logout
+   * ------------------------------------------------------------------ */
   const logout = useCallback(() => {
     router.push('/sign-in');
     const cookies = nookies.get(null);
-    Object.keys(cookies).forEach(cookieName => {
-      nookies.destroy(null, cookieName);
-    });
+    Object.keys(cookies).forEach((name) => nookies.destroy(null, name));
     localStorage.clear();
     sessionStorage.clear();
   }, [router]);
 
+  /** ------------------------------------------------------------------
+   *  7. Trocar conta de anúncio
+   * ------------------------------------------------------------------ */
   const switchAdAccount = useCallback((adAccount: AdAccount) => {
-    nookies.set(null, 'activeAdAccount', JSON.stringify(adAccount), { 
+    nookies.set(null, 'activeAdAccount', JSON.stringify(adAccount), {
       maxAge: 60 * 60 * 24 * 365 * 10,
-      path: '/' 
+      path: '/',
     });
     setActiveAdAccount(adAccount);
   }, []);
 
+  /** ------------------------------------------------------------------
+   *  8. Provedor
+   * ------------------------------------------------------------------ */
   return (
     <AuthContext.Provider
       value={{
@@ -188,10 +224,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Hook para consumo do contexto
+ */
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx)
+    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+  return ctx;
 }
