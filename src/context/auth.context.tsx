@@ -174,8 +174,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       {
         // auth_type: "reauthenticate",
-        scope: "public_profile,email,ads_read",
-        config_id: "1049856977152677",
+        // scope: "public_profile,email,ads_read",
+        // config_id: "1049856977152677",
         response_type: "code",
       },
     );
