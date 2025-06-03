@@ -160,23 +160,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * ------------------------------------------------------------------ */
   const fbReady = useFacebookSdk();
 
-  const loginWithFacebook = useCallback(() => {
-    if (!fbReady) return; // SDK ainda não carregou
-
-    (window as any).FB.login(
-      async (
-        response: fb.StatusResponse & {
-          code?: string;
-        },
-      ) => {
-       console.log(response);
-      },
-      {
-        auth_type: "reauthenticate",
-        config_id: '1049856977152677',
-      },
-    );
-  }, [fbReady, authService, findAdAccounts, findReports, router]);
+  (window as any).FB.login(
+    (response: fb.StatusResponse & { code?: string }) => {
+      // IIFE para manter código assíncrono
+      (async () => {
+        
+  
+        await findReports();
+        await findAdAccounts();
+        router.push('/top-criativos-vendas');
+      })();
+    },
+    {
+      auth_type: "reauthenticate",
+      config_id: '1049856977152677',
+    },
+  );
 
   /** ------------------------------------------------------------------
    *  6. Logout
