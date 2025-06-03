@@ -172,9 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        console.log(response);
       },
       {
-        scope: 'ads_read,pages_read_engagement',
+        auth_type: "reauthenticate",
         config_id: '1049856977152677',
-        response_type: 'code',
       },
     );
   }, [fbReady, authService, findAdAccounts, findReports, router]);
