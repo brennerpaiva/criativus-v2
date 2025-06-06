@@ -11,7 +11,8 @@ class AuthService {
    */
   async login(credentials: LoginDto): Promise<string> {
     const response = await apiClient.post<{ access_token: string }>('/auth/login', credentials);
-  return response.data.access_token;
+    console.log(response.data);
+    return response.data.access_token;
   }
 
   async createTokenFacebook(code: string): Promise<userModel> {

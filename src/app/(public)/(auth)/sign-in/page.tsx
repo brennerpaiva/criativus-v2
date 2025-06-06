@@ -3,25 +3,9 @@
 import { SignInFormComponent } from "@/components/business/forms/sign-in-form.component";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import ImageBanner from '/public/teste.jpg';
 
-export default function SignInPage() {
-  const [adAccounts, setAdAccounts] = useState([]);
-
-  useEffect(() => {
-    async function fetchAdAccounts() {
-      // try {
-      //   const accounts = await FacebookAdsService.getAdAccounts();
-      //   // setAdAccounts(accounts);
-      // } catch (error) {
-      //   console.error("Erro ao buscar contas de anúncios:", error);
-      // }
-    }
-
-    fetchAdAccounts();
-  }, []);
-  
+export default function SignInPage() {  
   return (
     <div className="w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
       <div className="flex items-center justify-center py-12">

@@ -1,4 +1,3 @@
-import { AdAccount } from "./ad-account.model";
 
 export interface userModel {
     id: number;
@@ -8,5 +7,6 @@ export interface userModel {
     access_token: string;
     accessTokenFb: string;
     facebookId: string;
-    adAccounts: AdAccount[];
+    onboardingCompleted: boolean;
+    onboardingCompletedAt: Date;
 }

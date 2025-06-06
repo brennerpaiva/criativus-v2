@@ -8,7 +8,8 @@ const publicRoutes = [
   { path: '/sign-up', whenAuthenticated: 'redirect' },
   { path: '/login-facebook', whenAuthenticated: 'next' }, //TODO: VER SE É POSSÍVEL DEIXAR COMO REDIRECT
   { path: '/snapshot', whenAuthenticated: 'next' },
-  { path: '/privacy-policy', whenAuthenticated: 'next' }
+  { path: '/privacy-policy', whenAuthenticated: 'next' },
+  { path: '/onboarding', whenAuthenticated: 'next' }
 ] as const;
 
 const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = '/sign-in';

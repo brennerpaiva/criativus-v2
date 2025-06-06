@@ -137,16 +137,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Nova função para login com Facebook (redirecionamento)
   const loginWithFacebook = useCallback( async () => {
-    const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
-    const SCOPES = "public_profile,business_management,pages_show_list";
-    const NEST_CALLBACK_URL = process.env.NEXT_PUBLIC_FACEBOOK_REDIRECT_URI ?? "";
-    const config = "1049856977152677"
-    const authUrl = `https://www.facebook.com/v16.0/dialog/oauth` +
-      `?client_id=${FB_APP_ID}` +
-      `&redirect_uri=${encodeURIComponent(NEST_CALLBACK_URL)}` +
-      `&config_id=${config}` +
-      `&response_type=code`;
-    window.location.href = authUrl;
+    // const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
+    // const SCOPES = "public_profile,business_management,pages_show_list";
+    // const NEST_CALLBACK_URL = process.env.NEXT_PUBLIC_FACEBOOK_REDIRECT_URI ?? "";
+    // const config = "1049856977152677"
+    // const authUrl = `https://www.facebook.com/v16.0/dialog/oauth` +
+    //   `?client_id=${FB_APP_ID}` +
+    //   `&redirect_uri=${encodeURIComponent(NEST_CALLBACK_URL)}` +
+    //   `&config_id=${config}` +
+    //   `&response_type=code`;
+    // window.location.href = authUrl;
   }, []);
   
   
